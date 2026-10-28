@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Streamer Voice Box is a live caption studio for expressive, readable, community-powered streams.">
+  <title>Streamer Voice Box — Live Caption Studio</title><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <svg class="icon-definitions" aria-hidden="true"><defs>
+    <symbol id="i-studio" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="3"/><path d="M8 21h8m-4-3v3M7 9h3m-3 4h8m-2-4h4"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 3 2.3 6.7L21 12l-6.7 2.3L12 21l-2.3-6.7L3 12l6.7-2.3L12 3Zm7-2v4m-2-2h4"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H9l-6 4V5a2 2 0 0 1 2-2Z"/><path d="M7 8h10M7 12h7"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M12 5v16M3 3l9 2 9-2v16l-9 2-9-2V3Z"/><path d="m6 8 3 .7m-3 4 3 .7m6-5 3-.7m-3 4.7 3-.7"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 3h7v7m0-7L10 14M10 4H5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-5"/></symbol>
+    <symbol id="i-mic" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="13" rx="4"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3m-4 0h8"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7V5Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h7m4 0h5M4 17h3m4 0h9"/><circle cx="13" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="m10 14 4-4m-6 6-1 1a4 4 0 0 1-6-6l5-5a4 4 0 0 1 6 0m0 12a4 4 0 0 0 6 0l5-5a4 4 0 0 0-6-6l-1 1" transform="translate(1 0) scale(.9)"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-twitch" viewBox="0 0 24 24"><path d="M4 3h18v13l-6 6h-5v-4H5L2 15V5l2-2Z"/><path d="M10 7v6m6-6v6"/></symbol>
+  </defs></svg>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Streamer Voice Box home"><span class="brand-mark"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4m4-8v12m4-15v18m4-15v12m4-8v4"/></svg></span><span class="brand-copy"><small>STREAMER</small><strong>Voice Box<span>.</span></strong></span></a>
+    <div class="workspace"><span class="workspace-icon">C</span><div>Creator workspace<small>MAKE YOURSELF HEARD</small></div></div>
+    <div class="nav-label">YOUR STUDIO</div>
+    <nav aria-label="Main navigation">
+      <button class="nav-item active" data-view="studio"><svg><use href="#i-studio"/></svg>Studio<span class="nav-dot"></span></button>
+      <button class="nav-item" data-view="appearance"><svg><use href="#i-spark"/></svg>Appearance</button>
+      <button class="nav-item" data-view="audience"><svg><use href="#i-chat"/></svg>Audience<span class="nav-new">NEW</span></button>
+      <button class="nav-item" data-view="research"><svg><use href="#i-book"/></svg>Research notes</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-note"><span class="mini-spark">✳</span><h3>A little more human.</h3><p>Words that look as good<br>as they sound.</p><button data-view="research">Behind the design <span>↗</span></button></div>
+      <button class="connection-nav" id="connections-sidebar"><span class="avatar">Y</span><span>Your local studio<small id="sidebar-connection">Twitch not connected</small></span><svg><use href="#i-sliders"/></svg></button>
+    </div>
+  </aside>
+  <div class="shell">
+    <header class="topbar"><div class="breadcrumb">Workspace <span>/</span> <strong id="breadcrumb">Studio</strong></div><div class="topbar-right"><span class="local-status"><i></i> LOCAL WORKSPACE</span><button class="quiet-btn" id="connections-button"><svg><use href="#i-link"/></svg>Setup</button></div></header>
+    <main>
+      <section class="page-intro"><div><div class="eyebrow"><span></span> LIVE CAPTION STUDIO</div><h1>Good words. Great company.</h1><p>Make every word feel like part of your stream.</p></div><div class="intro-actions"><button class="secondary-btn" id="copy-overlay"><svg><use href="#i-copy"/></svg>Copy OBS link</button><button class="primary-btn" id="start-microphone"><svg><use href="#i-mic"/></svg><span>Start microphone</span></button></div></section>
+      <section id="studio-view" class="view">
+        <div class="studio-grid">
+          <div class="main-column">
+            <section class="preview-card">
+              <div class="section-bar"><div><span class="section-label">YOUR VOICE, PART OF THE SHOW</span></div><span class="status-pill" id="mode-pill"><i></i> Demo preview</span></div>
+              <div class="stage-wrapper"><div class="stream-stage" id="preview-stage">
+                <img class="scene-art" src="/scene.svg" alt="Illustrated mountain valley at sunset, used as a sample stream backdrop">
+                <video class="scene-video" id="background-video" loop muted playsinline hidden></video>
+                <div class="scene-vignette"></div>
+                <div class="scene-top"><span class="scene-world">NORTH OF<br><b>EVERYWHERE</b></span><span class="scene-demo">SAMPLE SCENE</span></div>
+                <div class="scene-coordinates">47° 36′ N<br>122° 20′ W</div>
+                <div class="safe-guide" id="safe-guide"><span>CAPTION SAFE AREA</span></div>
+                <div class="caption-anchor" id="preview-caption"></div>
+                <div class="empty-caption" id="empty-caption" hidden><svg><use href="#i-mic"/></svg><span>Your next words belong here.</span><small>Listening for English speech</small></div>
+                <span class="scene-bottom">A SMALL ADVENTURE, TOGETHER.</span>
+              </div></div>
+              <div class="preview-controls"><div class="player-controls"><button class="icon-btn" id="playback" aria-label="Pause demo"><svg><use href="#i-pause"/></svg></button><button class="icon-btn" id="restart-demo" aria-label="Restart sample captions">↺</button><span id="playback-time">00:00</span><div class="waveform" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span class="demo-source" id="audio-label">Sample captions · no audio</span></div><div class="format-control" aria-label="Preview format"><button data-format="landscape" class="active" aria-label="Landscape preview"><span class="format-landscape"></span>16:9</button><button data-format="portrait" aria-label="Portrait preview"><span class="format-portrait"></span>9:16</button></div></div>
+            </section>
+            <div class="preview-under"><span><span class="tiny-dot"></span> Your changes appear in the overlay automatically</span><button class="text-btn" id="upload-backdrop">Try your own video <svg><use href="#i-external"/></svg></button><input type="file" id="video-file" accept="video/*" hidden></div>
+            <section class="panel transcript-panel"><div class="panel-heading"><div><h2>The conversation</h2><p>A little context for every word.</p></div><div class="language-pair"><span>EN</span><svg><use href="#i-arrow"/></svg><span id="language-badge">中文</span></div></div><div id="current-transcript" class="current-transcript"><span class="transcript-person">YOU</span><div><p id="source-transcript"></p><p id="translation-transcript" lang="zh-Hans"></p></div><span id="caption-origin" class="subtle-tag">SAMPLE</span></div><div class="transcript-footer"><span id="translation-status">Pretranslated demo phrases</span><button id="export-transcript" class="text-btn">Export transcript <span>↓</span></button></div></section>
+            <section class="panel health-panel"><div class="panel-heading"><div><h2>Ready when you are.</h2><p id="readiness-summary">Connect your sources to go live.</p></div><button class="secondary-btn" id="setup-shortcut">Set up sources ↗</button></div><div class="health-grid" id="health-grid"></div><details class="fine-tune"><summary>Session diagnostics <span>+</span></summary><pre id="diagnostics"></pre></details></section>
+            <section class="research-strip"><span class="research-symbol">Aa</span><div><h3>Designed for attention. Built for understanding.</h3><p>Research-informed starting points. Tune for your audience.</p></div><button class="circle-arrow" data-view="research" aria-label="Read the research">↗</button></section>
+          </div>
+          <div class="inspector">
+            <section class="panel modes-panel"><div class="panel-heading"><div><span class="mini-label">YOUR WORDS. CHAT’S PERSONALITY.</span><h2>Choose the experience.</h2></div></div>
+              <label for="preset">On-stream mode</label><select id="preset"><option value="captions">Captions · your voice, translated</option><option value="context">Full Context · you + your community</option><option value="describe">Description Only · the little moments</option><option value="chorus">Chat Chorus · a collective voice</option><option value="chaos">Chaos · a little beautifully wrong</option></select>
+              <p class="field-help" id="mode-description"></p><div class="secondary-preview"><span class="mini-label">SECONDARY LINE</span><p id="secondary-preview-text">A little room for the moment.</p></div>
+              <div class="mode-settings"><label for="secondary-language">Secondary language</label><select id="secondary-language"><option value="en">English</option><option value="zh">简体中文</option><option value="es">Español</option><option value="ja">日本語</option></select><label for="secondary-position">Secondary placement</label><select id="secondary-position"><option value="above">Above speech</option><option value="below">Below speech</option></select>
+              <label for="chaos-placement">When Chaos is active</label><select id="chaos-placement"><option value="alongside">Keep speech + add comedy</option><option value="replace">Replace speech with labeled fiction</option></select><label for="chorus-tone">Chat Chorus tone</label><select id="chorus-tone"><option value="playful">Playful</option><option value="literal">Literal</option></select></div>
+              <div id="active-effect" class="active-effect" hidden><span id="effect-countdown"></span><button class="text-btn" id="clear-effect">Return to my settings ↺</button></div>
+              <button class="reset-btn" id="preview-mode">Preview this mode · sample content ↗</button>
+            </section>
+            <section class="panel style-panel" id="appearance-section"><div class="panel-heading"><div><h2>Set the tone<span class="orange-dot">.</span></h2><p>Your voice. Your visual language.</p></div><svg class="heading-icon"><use href="#i-spark"/></svg></div>
+              <div class="style-grid" role="group" aria-label="Caption style">
+                <button class="style-option selected" data-style="spotlight"><span class="style-sample spotlight-sample">a little <em>spark.</em></span><span class="style-name">Spotlight<span class="selection-mark">✓</span></span></button>
+                <button class="style-option" data-style="paper"><span class="style-sample paper-sample">hello, world<span class="paper-star">✳</span></span><span class="style-name">Notebook<span class="selection-mark">✓</span></span></button>
+                <button class="style-option" data-style="comic"><span class="style-sample comic-sample"><b>GOOD VIBES!</b></span><span class="style-name">Sidekick<span class="selection-mark">✓</span></span></button>
+              </div>
+              <div class="settings-divider"></div>
+              <div class="field-heading"><label for="language">Translate into</label><span class="field-hint">English →</span></div>
+              <select id="language"><option value="zh">简体中文 · Chinese</option><option value="es">Español · Spanish</option><option value="ja">日本語 · Japanese</option></select>
+              <div class="field-heading"><label>Show on stream</label></div><div class="segmented" id="display-control"><button data-display="both" class="active">Both</button><button data-display="source">Original</button><button data-display="translation">Translation</button></div>
+              <div class="field-heading"><label for="font-size">Text size</label><output id="font-size-value">42 px</output></div><div class="range-row"><span class="range-a">A</span><input id="font-size" type="range" min="28" max="64" value="42"><span class="range-a large">A</span></div>
+              <div class="field-heading"><label for="hold">Phrase hold</label><output id="hold-value">5 seconds</output></div><input id="hold" type="range" min="3" max="10" step=".5" value="5"><p class="field-help">Reading time starts when a completed phrase or translation appears.</p>
+              <div class="field-heading"><label>Caption placement</label></div><div class="placement-options"><button data-position="top" aria-label="Place captions near top"><span class="placement-box top"></span></button><button data-position="center" aria-label="Place captions at center"><span class="placement-box center"></span></button><button class="active" data-position="bottom" aria-label="Place captions near bottom"><span class="placement-box bottom"></span></button></div>
+              <label class="toggle-row"><span>Gentle emphasis<small>One accent. A little personality.</small></span><input type="checkbox" id="emphasis" checked><span class="switch"></span></label>
+              <details class="fine-tune"><summary>Fine-tune readability <span>+</span></summary><div class="field-heading"><label for="backplate">Background strength</label><output id="backplate-value">76%</output></div><input id="backplate" type="range" min="45" max="100" value="76"><label class="toggle-row"><span>Reduced motion</span><input type="checkbox" id="reduced-motion"><span class="switch"></span></label><label class="toggle-row"><span>Preview safe area</span><input type="checkbox" id="safe-area" checked><span class="switch"></span></label></details>
+              <button class="reset-btn" id="reset-settings">Reset to starting points <span>↺</span></button>
+            </section>
+            <section class="panel audience-panel" id="audience-section"><div class="panel-heading"><div><span class="mini-label">A LITTLE AUDIENCE MAGIC</span><h2>Let chat set the mood.</h2></div><svg class="heading-icon"><use href="#i-chat"/></svg></div><p class="audience-description">Their ideas. Your words.<br>A shared moment on screen.</p><div class="command-chip"><span class="command-label">CHAT COMMAND</span><code>!style paper</code><span>↵</span></div><div class="audience-actions"><button data-action="paper">Try Notebook <span>↗</span></button><button data-action="comic">Try Sidekick <span>↗</span></button></div><p class="audience-footnote" id="audience-footnote">Preview events · 12s cooldown · 20s treatment</p><details class="fine-tune"><summary>Viewer permissions <span>+</span></summary><p class="field-help">Allowed modes can be activated for 20 seconds with !mode. Commands and rewards share the cooldown.</p><div id="allowed-modes" class="allowed-modes"></div><button class="text-btn" id="reward-setup">Map Channel Points rewards ↗</button></details><div id="audience-event" class="audience-event">Connect Twitch to hear from your community.</div></section>
+          </div>
+        </div>
+      </section>
+      <section id="research-view" class="view" hidden><div class="research-intro"><span class="research-kicker">THE THINKING BEHIND THE TYPE</span><h2>Expressive, with intention.</h2><p>We borrow useful ideas from TikTok's creative research and subtitle-reading studies. They inform the starting points—not promises of retention or a universal caption formula.</p></div><div class="research-cards" id="research-cards"></div><div class="evidence-note"><strong>What we still need to learn</strong><p>Test comprehension, fatigue, timing, and preferences with actual English and Chinese viewers over real Twitch footage. Our animation durations and phrase timing are design hypotheses. TikTok's ad-text pacing is not our live-caption speed target.</p><a href="https://discovery.ucl.ac.uk/id/eprint/10050653/" target="_blank" rel="noreferrer">Read the contrasting 2018 subtitle-speed study ↗</a></div></section>
+      <footer class="page-footer"><span>STREAMER VOICE BOX STUDIO <span class="footer-separator">/</span> A little more human.</span><span>Built with Codex <span class="footer-separator">·</span> TwitchCon 2026</span></footer>
+    </main>
+  </div>
+  <dialog id="connections-dialog" class="modal setup-modal">
+    <form method="dialog" class="modal-close"><button aria-label="Close setup"><svg><use href="#i-close"/></svg></button></form>
+    <span class="eyebrow">A FEW CONNECTIONS. A WHOLE NEW VOICE.</span><h2>Make yourself heard.</h2><p class="modal-lead">Set up once, then come back to your studio. Your keys stay on this computer.</p>
+    <nav class="setup-steps" aria-label="Setup steps"><button data-step="0" class="selected">1 · OpenAI</button><button data-step="1">2 · Twitch</button><button data-step="2">3 · Inputs</button><button data-step="3">4 · Experience</button><button data-step="4">5 · OBS</button></nav>
+    <section class="setup-page" data-page="0"><h3>Connect your own OpenAI account.</h3><p class="field-help">AI requests use your account. Saving a key does not start recording.</p><span id="openai-status" class="subtle-tag">CHECKING</span>
+      <form id="openai-form"><label for="openai-key">OpenAI API key</label><input id="openai-key" type="password" autocomplete="off" placeholder="Paste your key here" required><button class="primary-btn" type="submit">Save key locally</button></form>
+      <div class="connection-buttons"><button class="secondary-btn" id="validate-openai">Check connection</button><button class="secondary-btn" id="test-translation">Test English → Chinese</button></div><p class="field-help">The translation test makes a small paid request using your key.</p><output id="openai-result" class="setup-result" aria-live="polite"></output>
+      <a href="https://platform.openai.com/api-keys" target="_blank" rel="noreferrer">Create an OpenAI key ↗</a>
+      <div class="connection-block"><label for="speech-provider">Speech recognition</label><select id="speech-provider"><option value="browser">Browser speech · system default microphone</option><option value="openai">OpenAI Realtime · selected microphone</option></select><p class="connection-note" id="microphone-status"></p></div>
+    </section>
+    <section class="setup-page" data-page="1" hidden><h3>Bring your community along.</h3><span id="twitch-status" class="subtle-tag">NOT CONNECTED</span><p class="field-help">For this local version, register a Twitch application once. Add this exact OAuth redirect URL:</p><code id="oauth-callback" class="setup-code"></code><a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noreferrer">Open Twitch developer applications ↗</a>
+      <details id="twitch-app-details"><summary>One-time application settings</summary><form id="twitch-app-form"><label for="twitch-client">Application client ID</label><input id="twitch-client" autocomplete="off" required><label for="twitch-secret">Application client secret</label><input id="twitch-secret" type="password" autocomplete="off" required><button class="secondary-btn" type="submit">Save application</button></form></details>
+      <div class="connection-buttons"><button class="primary-btn" id="connect-twitch">Connect with Twitch</button><button class="secondary-btn" id="reconnect-twitch">Reconnect saved account</button><button class="text-btn" id="disconnect-twitch">Disconnect</button></div><p id="twitch-error" class="setup-result" aria-live="polite"></p>
+      <div class="connection-block"><h3>Channel Points effects</h3><p class="field-help">Map existing rewards to permitted modes. Effects last 20 seconds and share the audience cooldown; a redemption during cooldown will not activate an effect and is not automatically refunded. Create rewards in Twitch first.</p><button class="secondary-btn" id="load-rewards">Load my rewards</button><div id="reward-mappings"></div></div>
+    </section>
+    <section class="setup-page" data-page="2" hidden><h3>Let the studio hear and see you.</h3><label for="microphone-device">Microphone</label><select id="microphone-device"><option value="">System default</option></select><label class="toggle-row"><span>Enable streamer camera<small>Webcam or OBS Virtual Camera</small></span><input type="checkbox" id="camera-enabled"><span class="switch"></span></label><label for="camera-device">Camera</label><select id="camera-device"><option value="">System default</option></select>
+      <div class="connection-buttons"><button class="secondary-btn" id="test-devices">Test inputs</button><button class="text-btn" id="stop-device-test">Stop preview</button></div><p class="field-help">Input preview stays on this computer. Live mode sends enabled audio/camera samples to OpenAI. Restart a live session after changing devices.</p><meter id="input-meter" min="0" max="1" value="0" aria-label="Microphone input level"></meter>
+      <div class="camera-preview"><video id="camera-preview" muted playsinline></video><div id="crop-outline"></div><span>STREAMER CROP</span></div><div class="crop-controls"><label>Left<input id="crop-x" type="range" min="0" max=".9" step=".01" value="0"></label><label>Top<input id="crop-y" type="range" min="0" max=".9" step=".01" value="0"></label><label>Width<input id="crop-width" type="range" min=".1" max="1" step=".01" value="1"></label><label>Height<input id="crop-height" type="range" min=".1" max="1" step=".01" value="1"></label></div><p id="device-result" class="setup-result" aria-live="polite"></p>
+    </section>
+    <section class="setup-page" data-page="3" hidden><h3>Choose your starting point.</h3><p>The studio’s mode selector controls what viewers see. Style and languages are independent.</p><div class="setup-mode-options" id="setup-mode-options"></div><p class="field-help">Full Context mixes streamer descriptions and Chat Chorus. Chaos can keep your speech alongside the joke or replace it with clearly labeled fiction. Tune these options in the studio.</p><button class="secondary-btn" id="setup-show-studio">Choose settings in studio ↗</button></section>
+    <section class="setup-page" data-page="4" hidden><h3>Your voice, on stream.</h3><p>Add an OBS Browser Source at 1920 × 1080. Paste this URL:</p><div class="obs-setup"><code id="overlay-address" class="setup-code"></code><button class="secondary-btn" id="copy-overlay-modal">Copy OBS link</button><a href="/overlay" target="_blank" rel="noreferrer">Open the transparent source ↗</a></div><p class="field-help">Keep the studio tab open while capturing. The overlay only displays text. Use OBS Virtual Camera if your webcam is already in use.</p><button class="secondary-btn" id="setup-demo">Run labeled overlay sample</button><button class="primary-btn" id="finish-setup">Finish setup</button></section>
+    <footer class="setup-footer"><button class="text-btn" id="setup-back">← Back</button><span id="setup-progress">Step 1 of 5</span><button class="secondary-btn" id="setup-next">Next →</button></footer>
+  </dialog>
+  <button class="return-demo" id="return-demo" hidden>↺ Return to sample captions</button>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body></html>
