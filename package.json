@@ -1,0 +1,21 @@
+{
+  "name": "streamer-voice-box",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "An expressive, research-informed caption studio for Twitch.",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "node --watch server.mjs",
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "typecheck": "tsc --noEmit",
+    "test:soak": "node --expose-gc tests/soak.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}

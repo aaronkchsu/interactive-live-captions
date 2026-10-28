@@ -1,0 +1,12 @@
+.env
+.DS_Store
+node_modules/
+artifacts/
+*.log
+
+.local/
+
+.env.*
+!.env.example
+.runtime/
+coverage/
