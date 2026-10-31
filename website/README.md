@@ -34,11 +34,11 @@ The `.openai/hosting.json` project is for an owner-private Sites review deployme
 
 - All transcript, translation, chat, and Chaos content in the playground is scripted and labeled illustrative.
 - Chaos keeps accurate speech separate and shows a persistent fiction label.
-- The audience calculator uses visitor-selected assumptions, not measured lost viewers or growth claims.
-- Twitch's mobile statistic is attributed to its July 2024 disclosure; mobile does not mean muted.
+- The problem-first editorial layout uses oversized type, a restrained gold accent, sourced audience figures, and a scripted waveform demo. The old hypothetical audience-loss calculator has been removed.
+- Audience figures: 105 million monthly Twitch viewers (Amazon Ads, September 2025), over 50% primarily mobile and almost three quarters of new viewers first watching on mobile (Twitch, July 2024). Sources and dates appear beside the figures. The historical muted-feed default is dated; mobile use does not establish a mute rate. See ../docs/research.md.
 - Form publication, private response-sheet access, feature prefill, and a test submission were checked. Public Cloudflare Pages HTTPS, the Chinese translation demo, and the signup destination were verified. Both custom-domain bindings and their DNS records were created. Both hostnames are Active with SSL and verified in the browser.
-- Desktop and 390px mobile browser layout checked. Mobile has no horizontal overflow. Mode command, translation, pause, and fiction labeling checked; additional interactions verified in the task.
-- Reduced-motion preference pauses the scripted timer and removes the illustration animation.
+- Redesign checked at 1440px desktop and 390px mobile on 2026-10-30, without horizontal overflow. Chinese/Spanish/Japanese translation fixtures, Chat Chorus, Chaos labeling, valid/invalid chat commands, caption hiding/restoration, style switch, pause, audience shortcuts, expandable details, and signup feature prefill were verified. No browser console errors were observed.
+- Reduced-motion preference pauses the scripted timer and removes waveform animation. This behavior was inspected in source; OS preference emulation was not available in this browser session.
 - No analytics, secret storage, microphone access, or Twitch authorization occurs on this marketing page. Google Fonts are loaded from Google's font service.
 
 Local screenshots and deployment archives live in ignored `artifacts/` and are not published.
