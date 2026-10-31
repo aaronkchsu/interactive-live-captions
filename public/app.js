@@ -89,9 +89,6 @@ function render(next) {
 
 for (const name of ['Microphone', 'Camera', 'Twitch', 'Audio cues', 'Camera cues', 'Chat Chorus', 'Chaos']) { const card = document.createElement('div'); card.className = 'health-card'; card.dataset.health = name; const title = document.createElement('strong'); title.textContent = name; card.append(title, document.createElement('span')); $('#health-grid').append(card); }
 for (const [value, name] of Object.entries(modeNames)) { const label = document.createElement('label'), input = document.createElement('input'); input.type = 'checkbox'; input.value = value; label.append(input, document.createTextNode(name)); $('#allowed-modes').append(label); input.addEventListener('change', () => settings({ allowedModes: $$('#allowed-modes input:checked').map(item => item.value) })); }
-fetch('/api/research').then(response => response.json()).then(items => {
-  $('#research-cards').replaceChildren(...items.map(item => { const card = document.createElement('article'); card.className = 'research-card'; for (const [tag, className, content] of [['span', 'tag', item.tag], ['h3', '', item.title], ['p', '', item.text], ['p', 'decision', item.decision]]) { const element = document.createElement(tag); element.className = className; element.textContent = content; card.append(element); } const link = document.createElement('a'); link.href = item.url; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = `${item.source} ↗`; card.append(link); return card; }));
-}).catch(() => {});
 const changeOutput = value => api('output', { state: value }).then(render).catch(error => toast(error.message));
 $('#freeze-captions').addEventListener('click', () => changeOutput('frozen'));
 $('#hide-captions').addEventListener('click', () => changeOutput('hidden'));
@@ -113,7 +110,7 @@ for (const [id, key] of Object.entries(bindings)) {
 for (const field of ['style', 'format', 'display', 'position']) $$(`button[data-${field}]`).forEach(button => button.addEventListener('click', () => settings({ [field]: button.dataset[field] })));
 $$('[data-view]').forEach(button => button.addEventListener('click', () => {
   const view = button.dataset.view; $$('.nav-item').forEach(item => item.classList.toggle('active', item.dataset.view === view));
-  $('#studio-view').hidden = view === 'research'; $('#research-view').hidden = view !== 'research'; $('#breadcrumb').textContent = { studio: 'Studio', appearance: 'Appearance', audience: 'Audience', research: 'Research notes' }[view];
+  $('#breadcrumb').textContent = { studio: 'Studio', appearance: 'Appearance', audience: 'Audience' }[view];
   if (view === 'appearance' || view === 'audience') $(`#${view}-section`).scrollIntoView({ behavior: state?.settings.reducedMotion ? 'instant' : 'smooth' });
 }));
 $$('[data-action]').forEach(button => button.addEventListener('click', async () => { try { const result = await api('action', { kind: 'style', value: button.dataset.action }); toast(result.applied ? 'Labeled studio preview effect applied.' : result.message); } catch (error) { toast(error.message); } }));
