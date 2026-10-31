@@ -7,13 +7,15 @@ const modes = {
   chaos: 'Chat gets creative. Fiction stays labeled.'
 };
 const script = [
-  { en: 'Chat, I have a very good feeling about this.', accent: 'very good', zh: '各位，我有预感，这次肯定行。', es: 'Chat, tengo un muy buen presentimiento.', ja: 'みんな、今回はすごくいい予感がする。', chorus: 'Chat has collectively chosen optimism.', chaos: 'Streamer has challenged gravity to a rematch.' },
-  { en: 'That was absolutely part of the plan.', accent: 'absolutely', zh: '这绝对是计划的一部分。', es: 'Eso era absolutamente parte del plan.', ja: '今のは完全に計画通り。', chorus: 'Chat is politely questioning the strategy.', chaos: 'A nearby houseplant has requested a new coach.' },
-  { en: 'One more try. We have got this.', accent: 'One more try.', zh: '再试一次，我们能行。', es: 'Un intento más. Podemos hacerlo.', ja: 'もう一回。私たちならできる。', chorus: 'The community is rallying for one more attempt.', chaos: 'Confidence has left orbit. Skill is catching up.' }
+  { moment: 'Just chatting', en: 'Wait, what was I saying?', accent: 'what was I saying?', zh: '等等，我刚才说到哪儿了？', es: 'Espera, ¿qué estaba diciendo?', ja: '待って、何の話をしてたっけ？', chorus: 'Chat is still waiting for the plot.', chaos: 'Streamer has been talking about literally nothing for the past 30 minutes.' },
+  { moment: 'Snack break', en: 'One sec. Banana break.', accent: 'Banana break.', zh: '等一下，吃根香蕉休息一下。', es: 'Un segundo. Pausa para comer un plátano.', ja: 'ちょっと待って。バナナ休憩。', chorus: 'Chat came for gameplay. Stayed for the banana lore.', chaos: 'Viewers are just watching a streamer literally eat a banana.' },
+  { moment: 'Minecraft', en: 'Chat, it is literally just a door.', accent: 'just a door.', zh: '各位，这真的只是一扇门。', es: 'Chat, literalmente es solo una puerta.', ja: 'みんな、本当にただのドアだよ。', chorus: 'Chat has questions about this Minecraft build.', chaos: 'Streamer is being a little too scandalous about a Minecraft door.' }
 ];
-let mode = 'captions', line = 0, captionsHidden = false, paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let mode = 'chaos', line = 0, captionsHidden = false, paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function render() {
   const item = script[line];
+  $('#demo-moment').value = String(line);
+  $('#moment-label').textContent = item.moment.toUpperCase();
   const speech = $('#speech-caption');
   speech.replaceChildren();
   const [before, after] = item.en.split(item.accent);
@@ -48,6 +50,7 @@ document.querySelectorAll('[data-try]').forEach(button => button.addEventListene
   captionsHidden = false; $('#caption-toggle').setAttribute('aria-pressed', 'false'); $('#caption-toggle').textContent = 'Hide captions ↔'; $('.sound-tag').textContent = 'SOUND OFF'; setMode(button.dataset.try); $('#playground').scrollIntoView({block:'center'});
   $(`button[data-mode="${mode}"]`).focus({preventScroll:true});
 }));
+$('#demo-moment').addEventListener('change', () => { line = Number($('#demo-moment').value); render(); });
 $('#demo-language').addEventListener('change', () => setMode('translate'));
 function renderPause() {
   $('#pause').setAttribute('aria-pressed', String(paused));
