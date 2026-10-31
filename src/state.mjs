@@ -6,7 +6,7 @@ export const defaults = Object.freeze({
   preset: 'captions', secondaryLanguage: 'zh', secondaryPosition: 'above', chaosPlacement: 'alongside',
   chorusTone: 'playful', allowedModes: ['captions', 'context', 'describe', 'chorus', 'chaos'],
   microphoneId: '', cameraId: '', cameraEnabled: false, crop: { x: 0, y: 0, width: 1, height: 1 },
-  rewardMappings: {}, setupComplete: false
+  voiceEnabled: false, voiceViewerEnabled: false, rewardMappings: {}, setupComplete: false
 });
 const choices = {
   style: ["spotlight", "paper", "comic"], language: ["zh", "es", "ja"],
@@ -20,7 +20,7 @@ export function sanitizeSettings(input, current = defaults) {
   const next = { ...current };
   for (const [key, allowed] of Object.entries(choices)) if (allowed.includes(input[key])) next[key] = input[key];
   for (const [key, [min, max]] of Object.entries(numbers)) if (typeof input[key] === "number" && Number.isFinite(input[key])) next[key] = Math.min(max, Math.max(min, input[key]));
-  for (const key of ["emphasis", "reducedMotion", "safeArea", 'cameraEnabled', 'setupComplete']) if (typeof input[key] === "boolean") next[key] = input[key];
+  for (const key of ["emphasis", "reducedMotion", "safeArea", 'cameraEnabled', 'setupComplete', 'voiceEnabled', 'voiceViewerEnabled']) if (typeof input[key] === "boolean") next[key] = input[key];
   for (const key of ['microphoneId', 'cameraId']) if (typeof input[key] === 'string') next[key] = input[key].slice(0, 300);
   if (Array.isArray(input.allowedModes)) next.allowedModes = [...new Set(input.allowedModes.filter(value => choices.preset.includes(value)))];
   if (input.crop && typeof input.crop === 'object') {
@@ -30,7 +30,7 @@ export function sanitizeSettings(input, current = defaults) {
     crop.width = Math.max(.1, Math.min(1 - crop.x, crop.width)); crop.height = Math.max(.1, Math.min(1 - crop.y, crop.height)); next.crop = crop;
   }
   if (input.rewardMappings && typeof input.rewardMappings === 'object' && !Array.isArray(input.rewardMappings)) {
-    next.rewardMappings = Object.fromEntries(Object.entries(input.rewardMappings).slice(0, 100).filter(([id, value]) => /^[a-zA-Z0-9-]{1,100}$/.test(id) && choices.preset.includes(String(value))));
+    next.rewardMappings = Object.fromEntries(Object.entries(input.rewardMappings).slice(0, 100).filter(([id, value]) => /^[a-zA-Z0-9-]{1,100}$/.test(id) && [...choices.preset, 'voice:zh'].includes(String(value))));
   }
   return next;
 }
@@ -41,6 +41,7 @@ export function isCurrentTranslation(state, ticket) {
     state.caption.id === ticket.id && state.caption.source === ticket.source && state.mode === "live";
 }
 export function parseCommand(text, isModerator = false) {
+  if (/^!voice\s+zh\s*$/i.test(text.trim())) return { kind: 'voice', value: 'zh' };
   const mode = /^!mode\s+(captions|context|describe|chorus|chaos)\s*$/i.exec(text.trim());
   if (mode) return { kind: 'mode', value: mode[1].toLowerCase() };
   if (isModerator && /^!mode\s+reset\s*$/i.test(text.trim())) return { kind: 'reset', value: '' };

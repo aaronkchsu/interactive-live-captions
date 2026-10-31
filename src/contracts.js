@@ -5,7 +5,7 @@
  * @typedef {Context & {id:string, sequence:number, revision:number, source:string, final:boolean, at:number, expiresAt:number}} SpeechSegment
  * @typedef {Context & {segmentId:string, sourceRevision:number, targetLanguage:string, generation:number, status:string, text:string}} TranslationResult
  * @typedef {Context & {id: string, kind: 'observation'|'chorus'|'fiction', text: string, event?: string, language: string, observedAt: number, expiresAt: number, evidence: string[], origin: 'live'|'demo'}} Cue
- * @typedef {Context & {id: string, durationMs?:number, kind: 'mode'|'style'|'language'|'reset', value?: string, moderator: boolean, origin: string, actor: string}} CommunityAction
+ * @typedef {Context & {id: string, durationMs?:number, kind: 'mode'|'style'|'language'|'voice'|'reset', value?: string, moderator: boolean, origin: string, actor: string}} CommunityAction
  * @typedef {{now: () => number}} Clock
  */
 export const protocolVersion = 2;
@@ -35,5 +35,7 @@ export const protocolVersion = 2;
  * @property {boolean} cameraEnabled
  * @property {{x:number,y:number,width:number,height:number}} crop
  * @property {Record<string,string>} rewardMappings
+ * @property {boolean} voiceEnabled
+ * @property {boolean} voiceViewerEnabled
  * @property {boolean} setupComplete
  */

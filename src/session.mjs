@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { defaults, sanitizeSettings } from './state.mjs';
 import { WorkLane } from './scheduler.mjs';
 import { ChatWindow } from './chat.mjs';
+import { BroadcastState } from './broadcast.mjs';
 import { phrases } from './fixtures.mjs';
 
 const modes = ['captions', 'context', 'describe', 'chorus', 'chaos'];
@@ -18,6 +19,7 @@ export class StreamSession {
     this.usage = { requests: 0, inputTokens: 0, outputTokens: 0 };
     this.lanes = Object.fromEntries(['translation', 'audio', 'vision', 'chorus', 'chaos'].map(name => [name,
       createLane({ concurrency: name === 'translation' ? 2 : 1, capacity: name === 'translation' ? 4 : 1, now, onChange })]));
+    this.voice = new BroadcastState({ now });
     this.begin('demo');
   }
   context() { return { streamerId: this.streamerId, sessionId: this.sessionId }; }
@@ -27,7 +29,7 @@ export class StreamSession {
   }
   cancelLanes() { for (const lane of Object.values(this.lanes)) lane.cancel(); }
   begin(mode, provider = 'browser') {
-    this.cancelLanes(); this.sessionId = randomUUID(); this.captureId = mode === 'live' ? randomUUID() : '';
+    this.voice.reset(); this.cancelLanes(); this.sessionId = randomUUID(); this.captureId = mode === 'live' ? randomUUID() : '';
     this.effect = null; const connected = this.chat.connected; this.chat.reset(); this.chat.connected = connected;
     this.mode = mode; this.captureActive = mode === 'live'; this.captureHeartbeat = this.now(); this.started = this.now(); this.playing = mode === 'demo'; this.phrase = 0;
     this.segments = new Map(); this.display = null; this.draft = null; this.translationGeneration = 0; this.processorGeneration = 0;
@@ -44,12 +46,13 @@ export class StreamSession {
   owns(input) { return input.streamerId === this.streamerId && input.sessionId === this.sessionId && input.captureId === this.captureId && this.mode === 'live' && this.captureActive; }
   heartbeat() { this.captureHeartbeat = this.now(); }
   stopCapture() {
-    this.captureActive = false; this.cancelLanes(); this.resetOptional(); this.effect = null;
+    this.voice.reset(); this.captureActive = false; this.cancelLanes(); this.resetOptional(); this.effect = null;
     this.microphone.status = this.microphone.status === 'error' ? 'error' : 'stopped';
     this.camera.status = 'stopped'; this.previousFrame = null; this.onChange();
   }
   addEvent(text, origin = 'system') { this.events.unshift({ id: randomUUID(), text, origin, at: this.now() }); this.events = this.events.slice(0, 30); this.onChange(); }
   setSettings(input) {
+    this.voice.cancel();
     const previous = this.settings(); this.effect = null; this.base = sanitizeSettings(input, this.base);
     if (previous.language !== this.base.language) {
       this.translationGeneration++; this.lanes.translation.cancel();
@@ -159,10 +162,14 @@ export class StreamSession {
     this.seenActions.add(action.id); if (this.seenActions.size > 1000) this.seenActions.delete(this.seenActions.values().next().value);
     if (action.kind === 'reset') {
       if (!action.moderator) return { applied: false, message: 'Moderator permission required.' };
-      this.effect = null; this.resetOptional(); this.onChange(); return { applied: true };
+      this.voice.cancel(); this.effect = null; this.resetOptional(); this.onChange(); return { applied: true };
     }
     const settings = this.settings();
-    if (action.kind === 'language') {
+    if (action.kind === 'voice') {
+      if (!this.base.voiceEnabled || (!action.moderator && !this.base.voiceViewerEnabled)) return { applied: false, message: 'Chinese voice is not enabled for viewers.' };
+      if (!this.captureActive || this.microphone.status !== 'listening' || !this.available.openai) return { applied: false, message: 'Start a live microphone with your OpenAI key first.' };
+      if (action.value !== 'zh' || !this.voice.connected() || this.voice.effect) return { applied: false, message: 'Chinese voice needs a connected OBS audio source and no active voice effect.' };
+    } else if (action.kind === 'language') {
       if (!action.moderator || !['zh', 'es', 'ja'].includes(action.value)) return { applied: false, message: 'Moderator permission required.' };
     } else if (action.kind === 'mode') {
       if (!modes.includes(action.value) || (!action.moderator && !this.base.allowedModes.includes(action.value))) return { applied: false, message: 'This mode is not enabled for viewers.' };
@@ -172,7 +179,8 @@ export class StreamSession {
     const remaining = settings.cooldown * 1000 - (this.now() - this.lastAction);
     if (remaining > 0) return { applied: false, remaining: Math.ceil(remaining / 1000), message: 'Audience cooldown is active.' };
     this.lastAction = this.now();
-    if (action.kind === 'language') this.setSettings({ language: action.value });
+    if (action.kind === 'voice') this.voice.start(action.value);
+    else if (action.kind === 'language') this.setSettings({ language: action.value });
     else { this.effect = { kind: action.kind, value: action.value, until: this.now() + 20000 }; this.resetOptional(); }
     this.addEvent(`${action.actor || 'Viewer'} activated ${action.value}${action.kind === 'language' ? '' : ' for 20 seconds'}`, action.origin);
     if (this.mode === 'demo') this.showDemo(); return { applied: true };
@@ -191,7 +199,7 @@ export class StreamSession {
     this.demoNext = this.now() + settings.hold * 1000; this.onChange();
   }
   tick() {
-    const now = this.now();
+    const now = this.now(); this.voice.tick();
     if (this.effect && this.effect.until <= now) { this.effect = null; this.resetOptional(); if (this.mode === 'demo') this.showDemo(); this.onChange(); }
     if (this.mode === 'demo') { if (this.playing && now >= this.demoNext) { this.phrase++; this.showDemo(); } return; }
     if (this.captureActive && now - this.captureHeartbeat > 30000) this.stopCapture();
@@ -220,7 +228,7 @@ export class StreamSession {
     return { version: 2, ...this.context(), session: this.sessionId, mode: this.mode, settings: { style: settings.style, display: settings.display, fontSize: settings.fontSize, position: settings.position, backplate: settings.backplate, emphasis: settings.emphasis, reducedMotion: settings.reducedMotion, language: settings.language, preset: settings.preset, secondaryPosition: settings.secondaryPosition, chaosPlacement: settings.chaosPlacement },
       caption, draft: this.mode === 'live' && display && draft ? draft : null,
       secondary: this.mode === 'demo' ? this.demoCue : this.secondary?.visibleUntil > now ? this.secondary : null,
-      effect: this.effect, microphone: this.microphone };
+      voice: this.voice.snapshot(), effect: this.effect, microphone: this.microphone };
   }
   processorStatus() {
     return Object.fromEntries(Object.entries(this.status).map(([lane, state]) => {
@@ -243,5 +251,5 @@ export class StreamSession {
       metrics: Object.fromEntries(Object.entries(this.lanes).map(([name, lane]) => [name, lane.snapshot()])), usage: this.usage,
       styleUntil: this.effect?.until || 0 };
   }
-  close() { this.cancelLanes(); this.sessionId = randomUUID(); this.captureId = ''; this.mode = 'stopped'; }
+  close() { this.voice.reset(); this.cancelLanes(); this.sessionId = randomUUID(); this.captureId = ''; this.mode = 'stopped'; }
 }

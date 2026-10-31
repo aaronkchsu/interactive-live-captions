@@ -126,7 +126,7 @@ export class TwitchAdapter {
         else if (subscription === 'channel.chat.clear') this.onClear();
         else if (subscription === 'channel.channel_points_custom_reward_redemption.add') {
           const value = this.mappings()[data.reward.id];
-          if (value) this.onAction({ id: data.id, kind: 'mode', value, moderator: false, origin: 'reward', actor: data.user_name });
+          if (value) this.onAction({ id: data.id, kind: value === 'voice:zh' ? 'voice' : 'mode', value: value === 'voice:zh' ? 'zh' : value, moderator: false, origin: 'reward', actor: data.user_name });
         }
       } else if (type === 'revocation') { this.disconnect(); this.status('error', this.identity.login, 'Twitch revoked a subscription. Reconnect in Setup.'); }
     })().catch(error => { if (epoch === this.epoch) { this.disconnect(); this.status('error', this.identity?.login || '', error.message); } }); });
