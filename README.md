@@ -57,7 +57,7 @@ After connecting, load your existing Channel Points rewards and map them to mode
 ```text
 !mode captions|context|describe|chorus|chaos
 !style spotlight|paper|comic
-!captions zh|es|ja           (moderator/broadcaster; updates saved language)
+!captions fr                (moderator/broadcaster; any target code in public/languages.js)
 !mode reset                (moderator/broadcaster)
 ```
 
@@ -115,3 +115,15 @@ Enable **Let viewers activate Chinese voice** to allow `!voice zh` or map a rewa
 Keep the studio running. If the studio or audio source closes, the Voice Box route cannot carry the microphone: **unmute the original OBS microphone** to recover. Routing adds a local WebRTC hop; check lip sync and adjust OBS synchronization if needed. A normal browser opened at `/voice` is an audible preview and occupies the single receiver slot; close it before connecting OBS.
 
 As checked October 29, 2026, the model is **$0.034 per minute**: roughly **$0.0113 for 20 seconds**, plus connection/finish time. Existing caption, observation and commentary usage is separate. A single feed serves all viewers, so AI cost does not multiply with viewer count. See [OpenAI model pricing](https://developers.openai.com/api/docs/models/gpt-realtime-translate).
+
+## Caption languages
+
+The shared catalog in `public/languages.js` drives studio choices, server validation, provider prompts, Twitch moderator commands, and OBS language/direction metadata. There are 20 caption languages: English source captions and 19 translation targets. Spoken input remains English. Chinese voice dubbing is a separate feature and is not expanded by this catalog.
+
+Moderators can use `!captions fr`, `!captions ar`, or any translation code in the catalog. Secondary descriptions, Chorus, and Chaos use the same language catalog. Arabic and Hebrew caption text renders right to left while English labels remain left to right.
+
+Recorded samples remain limited to English/Chinese/Spanish/Japanese. Selecting another language in demo mode shows an explicit missing-sample message, never a substituted language or an automatic paid request. Live translation requires the streamer's key. Adding an option does not establish fluent-reader quality validation.
+
+After editing the catalog, run `npm run website:languages` to refresh the static landing-page list; `npm run website:check` detects drift.
+
+Validation on October 31, 2026: 51 automated tests passed, including all 19 targets through moderator-command → session → provider → overlay/history with mocked transport, missing-demo handling, invalid-language rejection, and RTL metadata. All 19 real API requests returned translations for the same short synthetic English phrase; this was not a microphone test or fluent-reader review. Arabic output was inspected in desktop and portrait bilingual layouts with reduced motion. Raw synthetic results and API-reported usage are kept locally in ignored `artifacts/language-smoke-result.json`. Re-run explicitly with `node scripts/smoke-languages.mjs --paid-synthetic-test` (uses saved key/API credits).

@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "test:soak": "node --expose-gc tests/soak.mjs",
     "website:dev": "python3 -m http.server 4320 --bind 127.0.0.1 --directory website/dist",
-    "website:check": "node --check website/dist/app.js && node --check website/dist/signup-config.js"
+    "website:languages": "node scripts/sync-website-languages.mjs",
+    "website:check": "node scripts/sync-website-languages.mjs --check && node --check website/dist/app.js && node --check website/dist/signup-config.js"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
