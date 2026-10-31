@@ -7,9 +7,9 @@ const modes = {
   chaos: 'Let chat get creative.'
 };
 const script = [
-  { moment: 'Just chatting', en: 'Wait, what was I saying?', accent: 'what was I saying?', zh: '等等，我刚才说到哪儿了？', es: 'Espera, ¿qué estaba diciendo?', ja: '待って、何の話をしてたっけ？', chorus: 'Chat is still waiting for the plot.', chaos: 'Streamer has been talking about literally nothing for the past 30 minutes.' },
-  { moment: 'Snack break', en: 'One sec. Banana break.', accent: 'Banana break.', zh: '等一下，吃根香蕉休息一下。', es: 'Un segundo. Pausa para comer un plátano.', ja: 'ちょっと待って。バナナ休憩。', chorus: 'Chat came for gameplay. Stayed for the banana lore.', chaos: 'Viewers are just watching a streamer literally eat a banana.' },
-  { moment: 'Minecraft', en: 'Chat, it is literally just a door.', accent: 'just a door.', zh: '各位，这真的只是一扇门。', es: 'Chat, literalmente es solo una puerta.', ja: 'みんな、本当にただのドアだよ。', chorus: 'Chat has questions about this Minecraft build.', chaos: 'Streamer is being a little too scandalous about a Minecraft door.' }
+  { moment: 'Just chatting', en: 'Wait, what was I saying?', accent: 'what was I saying?', zh: '等等，我刚才说到哪儿了？', es: 'Espera, ¿qué estaba diciendo?', ja: '待って、何の話をしてたっけ？', chorus: 'Chat is still waiting for the plot.', chaos: 'Streamer has been talking about nothing for the past 30 minutes.' },
+  { moment: 'Snack break', en: 'One sec. Banana break.', accent: 'Banana break.', zh: '等一下，吃根香蕉休息一下。', es: 'Un segundo. Pausa para comer un plátano.', ja: 'ちょっと待って。バナナ休憩。', chorus: 'Chat came for gameplay. Stayed for the banana lore.', chaos: 'Viewers are just watching a streamer eat a banana.' },
+  { moment: 'Minecraft', en: 'Chat, it is just a door.', accent: 'just a door.', zh: '各位，这只是一扇门。', es: 'Chat, es solo una puerta.', ja: 'みんな、ただのドアだよ。', chorus: 'Chat has questions about this Minecraft build.', chaos: 'Streamer is being a little too scandalous about a Minecraft door.' }
 ];
 let mode = 'chaos', line = 0, captionsHidden = false, paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
 function render() {
