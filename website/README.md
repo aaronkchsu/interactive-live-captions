@@ -46,3 +46,5 @@ The `.openai/hosting.json` project is for an owner-private Sites review deployme
 Local screenshots and deployment archives live in ignored `artifacts/` and are not published.
 
 The live studio now has 21 caption languages (English source plus 20 translation targets). The expandable marketing list is generated from `../public/languages.js` by `npm run website:languages` at the repository root. `npm run website:check` verifies synchronization. The marketing playground intentionally keeps its three recorded translation examples; it never makes live paid translation requests.
+
+Research notes live at `dist/research.html`, linked from the landing-page navigation. The static page preserves the studio’s original study links and limitations. It does not load the playground script or make API requests.

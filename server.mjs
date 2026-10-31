@@ -9,7 +9,6 @@ import { OpenAIProvider } from './src/providers.mjs';
 import { TwitchAdapter, TwitchOAuth } from './src/twitch.mjs';
 import { StateStreams } from './src/events.mjs';
 import { defaults } from './src/state.mjs';
-import { research } from './src/fixtures.mjs';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const testMode = process.env.VOICE_BOX_TEST_MODE === '1';
@@ -65,7 +64,6 @@ const server = http.createServer(async (request, response) => {
       if (testMode && url.pathname === '/test/broadcast') { response.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' }); response.end(await readFile(resolve(root, 'tests/browser-broadcast.html'))); return; }
       if (url.pathname === '/api/state') return json(response, 200, session.snapshot());
       if (url.pathname === '/api/overlay/state') return json(response, 200, session.overlay());
-      if (url.pathname === '/api/research') return json(response, 200, research);
       if (url.pathname === '/api/setup') return json(response, 200, { ...await credentials.status(owner), callback: oauth.callback, models: provider.models, localOnly: true });
       if (url.pathname === '/api/events' || url.pathname === '/api/overlay/events') {
         const overlay = url.pathname.includes('/overlay/'); streams.attach(response, overlay ? 'overlay' : 'studio', overlay ? session.overlay() : session.snapshot()); return;

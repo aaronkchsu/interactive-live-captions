@@ -31,3 +31,6 @@
 .language-list ul{list-style:none;padding:0;margin:0;font-size:15px;line-height:1.9}
 .language-list p{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;line-height:1.6;color:var(--muted)}
 @media(max-width:680px){.language-support{margin-top:20px;width:fit-content}.language-list{left:0;right:auto;width:min(290px,calc(100vw - 44px))}}
+
+/* Keep Research reachable on phones as well as desktop. */
+.header nav{gap:22px}@media(max-width:680px){.header{height:auto;min-height:82px;flex-wrap:wrap;padding-block:20px;row-gap:20px}.header nav{display:flex;order:3;width:100%;justify-content:space-between;gap:8px}.header nav a{font-size:10px;letter-spacing:.6px}}
