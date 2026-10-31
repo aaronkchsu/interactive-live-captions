@@ -10,8 +10,8 @@
   <meta property="og:description" content="Live captions. More languages. A chat that gets involved. Built for Twitch + OBS.">
   <meta property="og:type" content="website">
   <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="style.css?v=20261030-streamer">
-  <script type="module" src="app.js?v=20261030-streamer"></script>
+  <link rel="stylesheet" href="style.css?v=20261030-clean-demo">
+  <script type="module" src="app.js?v=20261030-clean-demo"></script>
 </head>
 <body>
 <a class="skip" href="#playground">Skip to interactive demo</a>
@@ -39,22 +39,19 @@
 <section class="solution" id="solution" aria-labelledby="solution-title"><div class="wrap">
   <div class="solution-heading"><div><p class="eyebrow">02 / MEET AURAMAX CAPTIONS</p><h2 id="solution-title">Sound off.<br><em>Story on.</em></h2></div><p>Interactive captions for your Twitch stream.<br>Let more people get the joke.</p></div>
   <div class="playground" id="playground">
-    <div class="demo-toolbar"><span><i></i> SCRIPTED DEMO · STOCK PHOTO</span><button id="pause" aria-pressed="false">Pause demo</button></div>
-    <div class="moment-picker"><label for="demo-moment">Pick a moment</label><select id="demo-moment"><option value="0">Just chatting</option><option value="1">Snack break</option><option value="2">Minecraft</option></select><span>Fictional scenarios. Real stream energy.</span></div>
+    <div class="demo-toolbar"><span>DEMO</span><label class="sr-only" for="demo-moment">Pick a moment</label><select id="demo-moment"><option value="0">Just chatting</option><option value="1">Snack break</option><option value="2">Minecraft</option></select><button id="pause" aria-pressed="false">Pause demo</button></div>
     <div class="stream-scene" id="scene" data-mode="chaos">
       <img class="streamer-photo" src="assets/streamer.jpg" width="1400" height="933" loading="lazy" alt="Gamer at his monitor, holding a headset microphone. Stock photograph by Yan Krukau.">
-      <div class="scene-top"><span id="moment-label">JUST CHATTING</span><span class="sound-tag">SOUND OFF</span></div>
 
-      <span id="chaos-label" class="chaos-label">CHAOS MODE · FICTION</span>
       <p class="empty-caption" id="empty-caption" hidden>Something happened.<br><em>You missed what.</em></p>
       <div class="caption-stack" aria-live="polite" aria-atomic="true"><div class="speech-caption" id="speech-caption">Wait, <em>what was I saying?</em></div><div class="secondary-caption" id="secondary-caption">Streamer has been talking about literally nothing for the past 30 minutes.</div></div>
       <button id="caption-toggle" aria-pressed="false">Hide captions <span aria-hidden="true">↔</span></button>
     </div>
     <div class="demo-controls"><div class="mode-tabs" role="group" aria-label="Demo caption mode"><button data-mode="captions" aria-pressed="false">01 Captions</button><button data-mode="translate" aria-pressed="false">02 Translate</button><button data-mode="chorus" aria-pressed="false">03 Chat Chorus</button><button data-mode="chaos" aria-pressed="true" class="selected">04 Chaos</button></div>
     <div class="demo-options"><p id="mode-description">Every word. Even on mute.</p><label class="sr-only" for="demo-language">Translation language</label><select id="demo-language"><option value="zh">Chinese · 中文</option><option value="es">Spanish · Español</option><option value="ja">Japanese · 日本語</option></select><button id="style-button" aria-pressed="false">Style: bold ↻</button></div>
-    <form id="chat-form"><label for="chat-command">Let chat take over.</label><input id="chat-command" autocomplete="off" maxlength="80" placeholder="Try !mode chaos"><button aria-label="Send demo chat command" type="submit">Send ↗</button></form><p id="chat-feedback" class="fine-print" role="status">Fictional sample dialogue and commentary. Photo is illustrative.</p></div>
+    <form id="chat-form"><label for="chat-command">Let chat take over.</label><input id="chat-command" autocomplete="off" maxlength="80" placeholder="Try !mode chaos"><button aria-label="Send demo chat command" type="submit">Send ↗</button></form><p id="chat-feedback" class="fine-print" role="status" hidden></p></div>
   </div>
-  <p class="photo-credit">Photo: <a href="https://www.pexels.com/photo/a-man-in-a-black-shirt-talking-on-a-headphone-s-mic-while-looking-at-a-computer-monitor-9072382/" target="_blank" rel="noopener">Yan Krukau / Pexels</a>. Illustrative photo; no endorsement.</p>
+  <p class="photo-credit">Scripted captions &amp; fictional commentary. Photo: <a href="https://www.pexels.com/photo/a-man-in-a-black-shirt-talking-on-a-headphone-s-mic-while-looking-at-a-computer-monitor-9072382/" target="_blank" rel="noopener">Yan Krukau / Pexels</a>.</p>
   <div class="solution-footer"><span>READ IT.</span><span>TRANSLATE IT.</span><span>GET CHAT INVOLVED.</span></div>
 </div></section>
 <section class="audience wrap" id="who" aria-labelledby="who-title"><div class="section-label"><span>03 / WHO IS IT FOR?</span><h2 id="who-title">Your stream.<br><em>More people in on it.</em></h2></div>
@@ -64,7 +61,7 @@
   <div class="audience-row"><span class="row-number">04</span><h3>Chat-first.</h3><p>Shared reactions. Viewer-triggered modes.<br>Let your community be part of the show.</p><button data-try="chorus" aria-label="Try Chat Chorus">↗</button></div>
 </section>
 <section class="signup wrap" id="early-access" aria-labelledby="signup-title"><div><p class="eyebrow">LESS MISSED. MORE UNDERSTOOD.</p><h2 id="signup-title">Let them<br><em>in.</em></h2><p>Bring AuraMax Captions to your stream.</p></div><div class="signup-form"><label for="interest">What does your stream need?</label><select id="interest"><option value="Captions">Captions for sound-off viewers</option><option value="Translation">A multilingual community</option><option value="Chat Chorus">Chat Chorus</option><option value="Chaos">Viewer-triggered Chaos</option></select><a id="signup-link" class="button solid" href="https://docs.google.com/forms/d/e/1FAIpQLScG6gB6ly6KwbriGQUZyAmVmJNv7hb7beQnffuPldZvgDilfw/viewform" target="_blank" rel="noopener" aria-describedby="signup-status">Get early access <span aria-hidden="true">↗</span></a><p id="signup-status" class="fine-print">Free signup · Google Form · Private responses</p><p class="prototype-note">Working local prototype for Twitch + OBS.<br>AI features use your own paid OpenAI API key.</p></div></section>
-<section class="notes wrap" aria-label="Product details"><details><summary>The details, without the sales pitch.</summary><div class="notes-grid"><p><strong>What’s ready?</strong>The local prototype includes captions, translation, chat modes, and OBS browser sources. This page’s demo is scripted. Website onboarding is still in development.</p><p><strong>Which languages?</strong>English speech with Chinese, Spanish, or Japanese caption translations. More languages are a future feature, not a promise of this release.</p><p><strong>What does it cost?</strong>This demo and signup are free. AI processing uses your own OpenAI API key and incurs usage charges. Product pricing is not set.</p><p><strong>What’s real?</strong>Speech, translations, chat summaries, and fiction are separate tracks. Chaos is labeled fiction. Audience statistics do not establish a mute rate or guaranteed channel growth.</p></div></details></section>
+<section class="notes wrap" aria-label="Product details"><details><summary>The details, without the sales pitch.</summary><div class="notes-grid"><p><strong>What’s ready?</strong>The local prototype includes captions, translation, chat modes, and OBS browser sources. This page’s demo is scripted. Website onboarding is still in development.</p><p><strong>Which languages?</strong>English speech with Chinese, Spanish, or Japanese caption translations. More languages are a future feature, not a promise of this release.</p><p><strong>What does it cost?</strong>This demo and signup are free. AI processing uses your own OpenAI API key and incurs usage charges. Product pricing is not set.</p><p><strong>What’s real?</strong>Speech, translations, chat summaries, and fiction are separate tracks. Chaos adds playful fictional commentary. Audience statistics do not establish a mute rate or guaranteed channel growth.</p></div></details></section>
 </main><footer class="footer wrap"><a class="brand" href="#" aria-label="AuraMax Captions home">AURA<span>MAX</span><small>CAPTIONS</small></a><p>Built with OpenAI Codex. Made for Twitch + OBS.</p><small>Independent project. Not affiliated with Twitch or OpenAI.</small></footer>
 </body>
 </html>

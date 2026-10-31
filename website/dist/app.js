@@ -4,7 +4,7 @@ const modes = {
   captions: 'Every word. Even on mute.',
   translate: 'Your words. Another language.',
   chorus: 'A whole chat. One shared reaction.',
-  chaos: 'Chat gets creative. Fiction stays labeled.'
+  chaos: 'Let chat get creative.'
 };
 const script = [
   { moment: 'Just chatting', en: 'Wait, what was I saying?', accent: 'what was I saying?', zh: '等等，我刚才说到哪儿了？', es: 'Espera, ¿qué estaba diciendo?', ja: '待って、何の話をしてたっけ？', chorus: 'Chat is still waiting for the plot.', chaos: 'Streamer has been talking about literally nothing for the past 30 minutes.' },
@@ -15,7 +15,6 @@ let mode = 'chaos', line = 0, captionsHidden = false, paused = matchMedia('(pref
 function render() {
   const item = script[line];
   $('#demo-moment').value = String(line);
-  $('#moment-label').textContent = item.moment.toUpperCase();
   const speech = $('#speech-caption');
   speech.replaceChildren();
   const [before, after] = item.en.split(item.accent);
@@ -25,7 +24,6 @@ function render() {
   secondary.hidden = mode === 'captions';
   secondary.textContent = mode === 'translate' ? item[$('#demo-language').value] : item[mode] || '';
   secondary.lang = mode === 'translate' ? $('#demo-language').value : 'en';
-  $('#chaos-label').hidden = mode !== 'chaos' || captionsHidden;
   $('.caption-stack').hidden = captionsHidden;
   $('#empty-caption').hidden = !captionsHidden;
   $('#scene').dataset.mode = mode;
@@ -42,12 +40,11 @@ $('#caption-toggle').addEventListener('click', () => {
   $('.caption-stack').hidden = captionsHidden;
   $('#caption-toggle').setAttribute('aria-pressed', String(captionsHidden));
   $('#caption-toggle').textContent = captionsHidden ? 'Show captions ↔' : 'Hide captions ↔';
-  $('.sound-tag').textContent = captionsHidden ? 'SOUND OFF · CAPTIONS OFF' : 'SOUND OFF';
   render();
 });
 document.querySelectorAll('button[data-mode]').forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
 document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => {
-  captionsHidden = false; $('#caption-toggle').setAttribute('aria-pressed', 'false'); $('#caption-toggle').textContent = 'Hide captions ↔'; $('.sound-tag').textContent = 'SOUND OFF'; setMode(button.dataset.try); $('#playground').scrollIntoView({block:'center'});
+  captionsHidden = false; $('#caption-toggle').setAttribute('aria-pressed', 'false'); $('#caption-toggle').textContent = 'Hide captions ↔'; setMode(button.dataset.try); $('#playground').scrollIntoView({block:'center'});
   $(`button[data-mode="${mode}"]`).focus({preventScroll:true});
 }));
 $('#demo-moment').addEventListener('change', () => { line = Number($('#demo-moment').value); render(); });
@@ -66,6 +63,7 @@ $('#style-button').addEventListener('click', () => {
 });
 $('#chat-form').addEventListener('submit', event => {
   event.preventDefault();
+  $('#chat-feedback').hidden = false;
   const input = $('#chat-command');
   const command = input.value.trim().toLowerCase();
   const requested = command.replace(/^!mode\s+/, '');
