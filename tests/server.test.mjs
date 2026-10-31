@@ -21,7 +21,7 @@ const post = async (path, data) => {
 };
 
 test("studio and OBS routes serve; sample content is clearly labeled", async () => {
-  const studio = await fetch(base); assert.equal(studio.status, 200); assert.match(await studio.text(), /Streamer Voice Box/);
+  const studio = await fetch(base); assert.equal(studio.status, 200); assert.match(await studio.text(), /AuraMax Captions/);
   const overlay = await fetch(`${base}/overlay`); assert.equal(overlay.status, 200); assert.match(await overlay.text(), /SAMPLE CAPTIONS/);
   const state = await (await fetch(`${base}/api/state`)).json();
   assert.equal(state.mode, "demo"); assert.equal(state.caption.origin, "demo"); assert.equal(state.available.openai, false);
@@ -88,4 +88,13 @@ test('voice signaling requires the capture owner and never leaks receiver creden
   assert.equal((await post('voice/answer', { ...context, id: receiver.data.id, sdp: 'v=0\no=answer' })).status, 200);
   const state = await (await fetch(`${base}/api/state`)).json(); assert.ok(!JSON.stringify(state).includes(receiver.data.token));
   await post('session', { mode: 'demo' }); assert.equal((await post('voice/receiver/poll', { token: receiver.data.token, ready: true })).status, 400);
+});
+
+test('output controls survive overlay snapshots and reject unsupported states', async () => {
+  await post('session', { mode: 'demo' });
+  const frozen = await post('output', { state: 'frozen' }); assert.equal(frozen.status, 200); assert.equal(frozen.data.output.state, 'frozen');
+  const hidden = await post('output', { state: 'hidden' }); assert.equal(hidden.data.output.state, 'hidden');
+  const overlay = await (await fetch(`${base}/api/overlay/state`)).json(); assert.equal(overlay.output.state, 'hidden');
+  assert.equal((await post('output', { state: 'invalid' })).status, 400);
+  assert.equal((await post('output', { state: 'running' })).data.output.state, 'running');
 });

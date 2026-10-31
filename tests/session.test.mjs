@@ -123,3 +123,34 @@ test('correcting a finalized phrase never pairs its old translation with the new
   await flush(); f.session.setSettings({ language: 'es' }); await flush(); f.requests[1].resolve('obsolete correction'); await flush();
   assert.equal(f.session.overlay().caption.translation, ''); f.requests[2].resolve('significado corregido'); await flush(); assert.equal(f.session.overlay().caption.translation, 'significado corregido');
 });
+
+test('freeze holds the exact presentation while speech and translations continue in history', async () => {
+  const f = fixture(); f.speech(0); await flush(); f.requests[0].resolve('first translation'); await flush();
+  f.session.setOutput('frozen'); const frozen = f.session.overlay();
+  f.advance(7000); f.speech(1); await flush(); f.requests[1].resolve('second translation'); await flush();
+  assert.deepEqual(f.session.overlay().caption, frozen.caption);
+  assert.equal(f.session.snapshot().transcript.at(-1).translation, 'second translation');
+  f.session.setSettings({ language: 'fr', preset: 'chaos' }); await flush();
+  assert.equal(f.session.overlay().presentationSettings.language, 'zh');
+  assert.equal(f.session.overlay().presentationSettings.preset, 'captions');
+  f.requests[2].resolve('traduction'); await flush();
+  f.session.setOutput('running');
+  assert.equal(f.session.overlay().caption.translation, 'traduction');
+  assert.equal(f.session.overlay().presentationSettings.language, 'fr'); f.session.close();
+});
+test('hide overrides freeze; resume never revives expired captions, and reconnect carries output state', () => {
+  const f = fixture(); f.session.available.openai = false; f.speech(0);
+  f.session.setOutput('frozen'); f.session.setOutput('hidden');
+  assert.equal(f.session.overlay().output.state, 'hidden');
+  assert.equal(f.session.snapshot().output.state, 'hidden');
+  f.advance(15000); f.session.setOutput('running'); assert.equal(f.session.overlay().caption.source, '');
+  assert.throws(() => f.session.setOutput('invalid'), /Choose running/);
+  f.session.setOutput('frozen'); f.session.begin('demo'); assert.equal(f.session.overlay().output.state, 'running');
+  f.session.setOutput('hidden'); f.session.stopCapture(); assert.equal(f.session.overlay().output.state, 'running'); f.session.close();
+});
+test('viewer actions cannot resume or reveal a streamer-hidden output', () => {
+  const f = fixture(); f.session.setOutput('hidden');
+  assert.equal(f.session.action({ id: 'show', kind: 'output', value: 'running', moderator: true }).applied, false);
+  f.session.action({ id: 'chaos', kind: 'mode', value: 'chaos', moderator: true });
+  assert.equal(f.session.overlay().output.state, 'hidden'); f.session.close();
+});
