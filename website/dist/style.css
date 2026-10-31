@@ -12,3 +12,7 @@
 /* Keep demo controls in one quiet row, outside the image. */
 .demo-toolbar{justify-content:flex-start;gap:18px}.demo-toolbar select{color:var(--paper);background:var(--ink);border:0;border-bottom:1px solid #575650;padding:5px 22px 5px 2px;border-radius:0;font-size:12px;letter-spacing:0}.demo-toolbar #pause{margin-left:auto}.photo-credit{line-height:1.6}
 @media(max-width:680px){.demo-toolbar{gap:12px;padding-block:10px}.demo-toolbar select{font-size:11px;max-width:150px}.demo-toolbar #pause{font-size:10px;white-space:nowrap}}
+
+/* Let visitors try the product before the audience evidence. */
+.hero{padding-bottom:55px}.solution-heading{align-items:start}.solution-heading>div{min-width:0;flex:1}.solution-heading h2{font-size:clamp(42px,4.5vw,65px)}.solution-heading>p{max-width:320px;align-self:end}.audience{border-top:1px solid var(--line)}
+@media(max-width:680px){.hero{padding-bottom:30px}.solution-heading h2{font-size:43px}.solution-heading>p{max-width:none}}
