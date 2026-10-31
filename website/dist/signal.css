@@ -1,0 +1,100 @@
+/* Yellow marks the streamer's words; pink marks community commentary.
+   Kept separate from the editorial stylesheet for easy comparison/reversal. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+:root{--yellow:#f5e642;--pink:#ff4f93;--night:#151719;--panel:#202326;--paper:#f5f4ec;--ink:#17191c;--muted:#5e6164;--line:#d0d2cb;--gold:#695e0c;--light-gold:var(--yellow);--display:'Space Grotesk',Arial,sans-serif}
+body{background:var(--night)}
+.wrap{width:min(1320px,100%);padding-inline:48px}
+.header{height:88px;background:var(--night);color:var(--paper);border-color:#3a3d40}
+.brand{font-size:24px;font-weight:700;letter-spacing:-1.6px;padding-bottom:14px}
+.brand span{font-weight:700;color:var(--yellow)}
+.brand small{font-size:9px;letter-spacing:3.4px;color:inherit}
+.header nav a{font-size:11px;letter-spacing:.6px}
+.header nav a:hover{color:var(--yellow)}
+.button{font-size:12px;font-weight:700;text-transform:none;letter-spacing:0;border-radius:3px;padding:15px 20px;gap:24px}
+.header .button,.hero .button{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+.button:hover{background:var(--pink);border-color:var(--pink);color:var(--ink)}
+.hero{color:var(--paper);padding-top:36px;padding-bottom:20px}
+.hero-kicker{font-size:11px;letter-spacing:1px;color:#c3c7c9}
+.hero h1{font-size:clamp(66px,10.9vw,142px);line-height:.97;letter-spacing:-.065em;font-weight:700;margin:28px 0 35px;white-space:normal}
+.hero-caption{display:inline-block;background:var(--yellow);color:var(--ink);padding:0 .11em .075em .07em;margin-top:.09em}
+.hero .period{color:var(--ink)}
+.hero-bottom{grid-template-columns:1fr 1fr auto;gap:32px;padding-bottom:38px}
+.serif,h2 em{font-family:var(--display);font-style:normal;font-weight:600;letter-spacing:-.05em}
+.serif{font-size:clamp(23px,2.5vw,33px);line-height:1.18}
+.hero-bottom>p:not(.serif){font-size:15px;max-width:280px}
+.hero-bottom strong{color:#c3c7c9;font-weight:400}
+h2{font-weight:700;letter-spacing:-.045em;line-height:1.05}
+h2 em{font-size:1em;color:inherit}
+.solution{background:var(--night);padding-top:38px;padding-bottom:48px;border-top:1px solid #3a3d40}
+.solution-heading{gap:32px;align-items:end;margin-bottom:28px}
+.solution-heading h2{font-size:clamp(34px,4.1vw,56px);margin-top:0;font-weight:700}
+.solution-heading h2 em{color:var(--yellow)}
+.language-support{font-size:14px;margin-bottom:0}
+.language-support summary{border:1px solid #62676a;padding:10px 14px;border-radius:3px}
+.language-support summary span{margin-left:12px;color:var(--yellow)}
+.language-list{background:var(--paper);border-color:var(--line);border-radius:3px}
+.playground{border:1px solid #4c5154;border-radius:4px;overflow:clip}
+.demo-toolbar{padding:10px 18px;background:var(--panel);border-bottom:1px solid #4c5154;gap:20px}
+.demo-toolbar>span{color:var(--yellow);font-size:10px;font-weight:700;letter-spacing:1px}
+.demo-toolbar select{background:var(--panel);font-size:13px;border-color:#62676a}
+.demo-toolbar #pause{font-size:12px;color:var(--paper)}
+.stream-scene{height:460px}
+.streamer-photo{object-position:center 38%}
+.caption-stack{max-width:980px;align-items:flex-start;text-align:left;padding:28px 36px 64px;gap:14px}
+.speech-caption{font-size:clamp(25px,3vw,40px);line-height:1.35;font-weight:700;letter-spacing:-.035em;text-wrap:pretty}
+.speech-caption em{background:var(--yellow);color:var(--ink);text-shadow:none;padding:.04em .15em;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.secondary-caption{background:var(--paper);color:var(--ink);font-size:clamp(22px,2.5vw,34px);font-weight:600;border-radius:3px;padding:12px 18px;text-align:left;text-wrap:pretty;letter-spacing:-.035em;line-height:1.25}
+.stream-scene[data-mode='chorus'] .secondary-caption,.stream-scene[data-mode='chaos'] .secondary-caption{background:var(--pink)}
+.stream-scene[data-mode='translate'] .secondary-caption{border-left:5px solid var(--yellow)}
+.stream-scene[data-mode='chorus'] .speech-caption,.stream-scene[data-mode='chaos'] .speech-caption{font-size:19px}
+.classic .speech-caption em{background:none;color:white;padding:0}
+.classic .secondary-caption{font-weight:500}
+#caption-toggle{font-size:12px;color:var(--paper);background:#16181bdf;padding:7px 10px;bottom:16px;right:18px;border-radius:3px;text-decoration:none;border:1px solid #6b7075}
+#caption-toggle[aria-pressed=true]{color:var(--yellow)}
+.demo-controls{background:var(--panel);color:var(--paper);padding:0 18px 18px;--line:#484d50;--muted:#bcc2c6}
+.mode-tabs{margin-inline:-18px;gap:1px;background:#484d50;border-bottom:1px solid #484d50}
+.mode-tabs button{background:var(--panel);font-size:13px;padding:16px 10px;border:0;font-weight:500}
+.mode-tabs button:hover{background:#303538}
+.mode-tabs button.selected{background:var(--yellow);color:var(--ink);font-weight:700}
+.mode-tabs button[data-mode='chorus'].selected,.mode-tabs button[data-mode='chaos'].selected{background:var(--pink)}
+.demo-options{padding-block:17px;font-size:13px;gap:16px}
+.demo-options select{background:var(--panel);color:var(--paper);font-size:13px;border:1px solid #62676a;border-radius:3px;padding:7px 10px}
+.demo-options button{font-size:12px}
+#chat-form{font-size:13px;gap:16px;padding-top:16px}
+#chat-form label{color:var(--pink)}
+#chat-form input{color:var(--paper);background:#151719;border:1px solid #62676a;border-radius:3px;flex:1;max-width:380px;padding:11px 12px;font-size:13px}
+#chat-form input::placeholder{color:#a5acb1}
+#chat-form button{background:var(--pink);color:var(--ink);border-radius:3px;font-weight:700;padding:11px 20px}
+#chat-feedback{color:#c3c7c9;font-size:12px}
+.photo-credit{font-size:11px;color:#b7bdc1;margin-top:14px}
+.evidence,.audience,.signup,.notes,.footer{background:var(--paper);box-shadow:0 0 0 100vmax var(--paper);clip-path:inset(0 -100vmax)}
+.evidence{padding-top:64px;padding-bottom:52px}
+.evidence-intro{margin-bottom:45px}
+.eyebrow,.section-label>span{font-size:11px;font-weight:700;letter-spacing:1px}
+.survey-title{grid-template-columns:.8fr 2fr;gap:36px;font-size:clamp(28px,3vw,42px)}
+.survey-percent{font-weight:700;color:var(--ink);font-size:clamp(100px,12vw,160px);letter-spacing:-.08em;line-height:1;background:var(--yellow);padding:0 10px 8px;justify-self:start}
+.survey-source{margin-left:calc((100% - 36px)/3.5 + 36px);font-size:12px}
+.stat{font-weight:600;font-size:clamp(60px,7vw,94px)}
+.stats h3{font-size:17px;font-weight:600}
+.stats a,.muted-fact small{font-size:11px}
+.muted-fact{margin-top:32px}
+.audience{padding-top:60px;padding-bottom:30px}
+.section-label{margin-bottom:36px;grid-template-columns:1fr 2fr;gap:32px}
+.section-label h2{font-size:clamp(32px,4.2vw,56px)}
+.audience h2 em{color:var(--ink);background:var(--yellow);box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:0 .1em}
+.audience-row{grid-template-columns:32px 1.2fr 1.3fr 44px;gap:24px;padding-block:26px}
+.audience-row h3{font-weight:600;font-size:clamp(25px,2.7vw,36px);line-height:1.15;letter-spacing:-.055em}
+.row-number{color:var(--muted);font-size:12px}
+.audience-row button{font-size:25px;border:1px solid var(--line);border-radius:3px}
+.audience-row button:hover{background:var(--yellow);border-color:var(--yellow);color:var(--ink)}
+.audience-row button[data-try='chorus']:hover{background:var(--pink);border-color:var(--pink)}
+.signup{padding-top:48px;padding-bottom:64px}
+.signup h2{font-size:clamp(70px,9vw,116px);font-weight:700;margin-top:0}
+.signup h2 em{color:var(--ink);background:var(--yellow);padding:0 .1em}
+.signup-form select{border-color:#969b99;border-radius:3px;font-size:14px}
+.signup .button:hover{color:var(--ink);background:var(--yellow);border-color:var(--ink)}
+.footer .brand span{color:var(--ink);background:var(--yellow);padding-inline:2px}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--pink);outline-offset:4px}
+@media(min-width:1500px){.hero h1{font-size:142px}}
+@media(max-width:1000px){.wrap{padding-inline:30px}.header nav{gap:14px}.header nav a{font-size:10px}.header .button{padding:12px;gap:12px}.hero-bottom{grid-template-columns:1fr 1fr;gap:22px}.hero-bottom .button{grid-column:2}.audience-row{gap:18px;grid-template-columns:24px 1fr 1.2fr 38px}.solution-heading{gap:22px}.language-support{font-size:12px}}
+@media(max-width:680px){.wrap{padding-inline:20px}.header{height:auto;padding-block:20px}.header nav{gap:8px}.header nav a{font-size:10px}.hero{padding-top:28px;padding-bottom:8px}.hero-kicker{font-size:10px}.hero h1{font-size:14.4vw;line-height:1;margin:26px 0 30px}.hero-bottom{grid-template-columns:1fr;gap:19px;padding-bottom:30px}.hero-bottom .button{grid-column:auto}.hero-bottom>p:not(.serif){max-width:320px}.serif{font-size:27px}.solution{padding-top:30px;padding-bottom:32px}.solution-heading{display:block;margin-bottom:22px}.solution-heading h2{font-size:36px}.language-support{margin-top:20px}.language-support summary{font-size:13px}.stream-scene{height:430px}.caption-stack{padding:24px 18px 64px;gap:12px}.speech-caption{font-size:25px}.secondary-caption{font-size:23px;padding:10px 13px}.stream-scene[data-mode='chorus'] .speech-caption,.stream-scene[data-mode='chaos'] .speech-caption{font-size:16px}.demo-toolbar{padding:10px 12px;gap:10px}.demo-toolbar select{font-size:12px;max-width:145px}.demo-toolbar #pause{font-size:11px}.mode-tabs{grid-template-columns:1fr 1fr}.mode-tabs button{font-size:12px;padding:14px 6px}.demo-controls{padding-inline:12px}.mode-tabs{margin-inline:-12px}.demo-options{gap:12px}.demo-options p{font-size:13px}.demo-options select{font-size:13px}.demo-options button{font-size:12px}#chat-form{gap:10px}#chat-form label{font-size:13px}#chat-form input{font-size:16px;width:100px}#chat-form button{padding:12px}.photo-credit{font-size:11px}.evidence{padding-top:42px;padding-bottom:30px}.survey-title{grid-template-columns:1fr;gap:18px;font-size:30px}.survey-percent{font-size:110px}.survey-source{margin-left:0;font-size:12px}.stats article,.stats article:first-child,.stats article:last-child{grid-template-columns:115px 1fr;gap:6px 14px}.stat{font-size:57px}.stats h3{font-size:15px}.stats a{font-size:11px}.muted-fact small{font-size:11px}.audience{padding-top:38px;padding-bottom:22px}.section-label{grid-template-columns:1fr;gap:18px;margin-bottom:26px}.section-label h2{font-size:34px}.audience-row{grid-template-columns:22px 1fr 38px;gap:12px;padding-block:23px}.audience-row h3{font-size:28px}.audience-row p{font-size:14px}.signup{padding-top:38px;padding-bottom:42px;gap:28px}.signup h2{font-size:82px}.footer{padding-block:30px}}
