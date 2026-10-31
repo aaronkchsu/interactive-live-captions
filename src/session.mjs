@@ -1,3 +1,4 @@
+import { translationSupported } from '../public/languages.js';
 import { randomUUID } from 'node:crypto';
 import { defaults, sanitizeSettings } from './state.mjs';
 import { WorkLane } from './scheduler.mjs';
@@ -170,7 +171,7 @@ export class StreamSession {
       if (!this.captureActive || this.microphone.status !== 'listening' || !this.available.openai) return { applied: false, message: 'Start a live microphone with your OpenAI key first.' };
       if (action.value !== 'zh' || !this.voice.connected() || this.voice.effect) return { applied: false, message: 'Chinese voice needs a connected OBS audio source and no active voice effect.' };
     } else if (action.kind === 'language') {
-      if (!action.moderator || !['zh', 'es', 'ja'].includes(action.value)) return { applied: false, message: 'Moderator permission required.' };
+      if (!action.moderator || !translationSupported(action.value)) return { applied: false, message: 'Moderator permission required.' };
     } else if (action.kind === 'mode') {
       if (!modes.includes(action.value) || (!action.moderator && !this.base.allowedModes.includes(action.value))) return { applied: false, message: 'This mode is not enabled for viewers.' };
       if (this.mode === 'live' && action.value !== 'captions' && !this.available.openai) return { applied: false, message: 'This mode needs an OpenAI connection.' };
@@ -187,7 +188,7 @@ export class StreamSession {
   }
   showDemo() {
     const phrase = phrases[this.phrase % phrases.length]; const settings = this.settings();
-    this.demoCaption = { id: `demo-${this.phrase}`, source: phrase.en, translation: phrase[settings.language], final: true, emphasis: phrase.emphasis, origin: 'demo' };
+    this.demoCaption = { id: `demo-${this.phrase}`, source: phrase.en, translation: phrase[settings.language] || '', final: true, emphasis: phrase.emphasis, origin: 'demo' };
     const texts = {
       en: { observation: '(laughing)', chorus: 'Chat has seventeen plans. None of them agree.', fiction: '(negotiating with gravity)' },
       zh: { observation: '（正在笑）', chorus: '聊天室有十七个计划，但谁也不同意谁。', fiction: '（正在和重力谈判）' },
@@ -195,7 +196,7 @@ export class StreamSession {
       ja: { observation: '（笑っている）', chorus: 'チャットには17の案。でも誰も同意しない。', fiction: '（重力と交渉中）' }
     };
     const kind = settings.preset === 'chaos' ? 'fiction' : settings.preset === 'chorus' || (settings.preset === 'context' && this.phrase % 2) ? 'chorus' : 'observation';
-    this.demoCue = settings.preset === 'captions' ? null : { id: `sample-${this.phrase}`, kind, text: texts[settings.secondaryLanguage][kind], language: settings.secondaryLanguage, origin: 'demo' };
+    this.demoCue = settings.preset === 'captions' || !texts[settings.secondaryLanguage] ? null : { id: `sample-${this.phrase}`, kind, text: texts[settings.secondaryLanguage][kind], language: settings.secondaryLanguage, origin: 'demo' };
     this.demoNext = this.now() + settings.hold * 1000; this.onChange();
   }
   tick() {
