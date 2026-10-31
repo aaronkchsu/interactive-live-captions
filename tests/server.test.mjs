@@ -77,3 +77,15 @@ test('setup stores secrets without exposing them in any public snapshot', async 
   }
   await post('setup/openai', { key: '' });
 });
+test('voice signaling requires the capture owner and never leaks receiver credentials in snapshots', async () => {
+  const live = (await post('session', { mode: 'live' })).data;
+  const context = { streamerId: live.streamerId, sessionId: live.sessionId, captureId: live.captureId };
+  const receiver = await post('voice/receiver/start', { clientId: 'test-obs', sdp: 'v=0\no=offer' }); assert.equal(receiver.status, 200);
+  assert.equal((await post('voice/signal', { ...context, captureId: 'wrong' })).status, 400);
+  await post('settings', { voiceEnabled: true });
+  const signal = await post('voice/signal', context); assert.equal(signal.data.offer.id, receiver.data.id);
+  assert.equal((await post('voice/answer', { ...context, id: 'wrong', sdp: 'v=0' })).status, 400);
+  assert.equal((await post('voice/answer', { ...context, id: receiver.data.id, sdp: 'v=0\no=answer' })).status, 200);
+  const state = await (await fetch(`${base}/api/state`)).json(); assert.ok(!JSON.stringify(state).includes(receiver.data.token));
+  await post('session', { mode: 'demo' }); assert.equal((await post('voice/receiver/poll', { token: receiver.data.token, ready: true })).status, 400);
+});
