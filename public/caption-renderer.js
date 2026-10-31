@@ -1,11 +1,12 @@
 import { captionLanguage } from './languages.js';
 export function clearCaption(target) { target.replaceChildren(); delete target.dataset.renderKey; }
 export function renderCaption(target, state) {
-  const settings = state.settings;
+  if (state.output?.state === 'hidden') { clearCaption(target); return; }
+  const settings = state.presentationSettings || state.settings;
   target.dataset.style = settings.style; target.dataset.position = settings.position; target.dataset.reduced = String(settings.reducedMotion);
   target.dataset.secondary = settings.secondaryPosition || 'above';
   target.style.setProperty('--caption-size', settings.fontSize); target.style.setProperty('--plate', settings.backplate / 100);
-  const dub = state.voice?.effect, dubbing = dub && ['active', 'draining'].includes(dub.phase);
+  const dub = (state.captionVoice || state.voice)?.effect, dubbing = dub && ['active', 'draining'].includes(dub.phase);
   const hiddenSpeech = dubbing || settings.preset === 'describe' || (settings.preset === 'chaos' && settings.chaosPlacement === 'replace');
   const key = JSON.stringify([state.sessionId || state.session, state.caption, state.draft, state.secondary, dub?.id, dub?.phase, dub?.text, settings.style, settings.display, settings.emphasis, settings.language, settings.preset, settings.chaosPlacement]);
   if (target.dataset.renderKey === key && target.childNodes.length) return;

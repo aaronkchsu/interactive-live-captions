@@ -41,3 +41,13 @@ test('Arabic and Hebrew preserve RTL text while English speech and secondary lab
     assert.equal(target.querySelector('.caption-source').lang, 'en');
   }
 });
+
+test('hidden output clears speech, secondary cues and dub labels, then repaints on resume', t => {
+  const previous = globalThis.document; globalThis.document = { createElement: () => new Element(), createTextNode: text => ({ textContent: text }) };
+  t.after(() => { if (previous === undefined) delete globalThis.document; else globalThis.document = previous; });
+  const target = new Element(), state = { sessionId: 'hidden', settings: { ...defaults }, caption: { id: 'a', source: 'hello', translation: '你好' }, output: { state: 'running' } };
+  renderCaption(target, state); assert.ok(target.childNodes.length);
+  state.output.state = 'hidden'; renderCaption(target, state); assert.equal(target.childNodes.length, 0);
+  state.voice = { effect: { id: 'dub', phase: 'active', text: '大家好' } }; renderCaption(target, state); assert.equal(target.childNodes.length, 0);
+  state.output.state = 'running'; renderCaption(target, state); assert.equal(target.querySelector('.dub-caption').textContent, '大家好');
+});

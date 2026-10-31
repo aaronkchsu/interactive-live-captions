@@ -24,11 +24,21 @@ Open [the studio](http://localhost:4317) in Chrome or Edge. The first screen use
 
 1. Open **Setup → OpenAI**. Paste your own key into the masked field and save it. **Check connection** checks account/model access; **Test English → Chinese** makes one small paid translation request. Select browser speech or OpenAI Realtime.
 2. In **Inputs**, choose a microphone and optionally a webcam/OBS Virtual Camera. **Test inputs** previews locally without sending media to AI. Adjust the crop around the streamer. Restart a live session after changing devices. Browser speech uses the system default microphone; OpenAI uses the selected input.
-3. Choose a mode and languages in the studio, then click **Start live session**. Grant microphone/camera permission. Speak English; finalized phrases receive Chinese, Spanish, or Japanese translations. Device capture and paid continuous processing only start through this action.
+3. Choose a mode and languages in the studio, then click **Start live session**. Grant microphone/camera permission. Speak English; finalized phrases receive translations in your selected target language. Device capture and paid continuous processing only start through this action.
 4. Add an OBS **Browser Source** with `http://localhost:4317/overlay`, normally at **1920 × 1080**, or **1080 × 1920** for portrait. This local URL is for OBS on the same machine. The source is transparent; the studio’s sample landscape is not broadcast.
 5. **Stop session** ends capture and returns to labeled samples. Closing the studio stops devices; a 30-second capture lease also stops server-side paid lanes if the tab disappears unexpectedly.
 
 The in-app browser is useful for design previews; Chrome/Edge are the supported live-capture targets. Browser speech may use its vendor’s recognition service and is not guaranteed to run on-device.
+
+## On-stream controls
+
+The studio uses the landing page’s cream, black and gold styling; overlay presets remain independent. Setup opens with Twitch, followed by OpenAI, inputs, preferences and OBS. This connects a local channel; hosted Twitch account sign-in remains a later milestone.
+
+- **Freeze** holds the exact current caption presentation while speech, translations and transcript history continue.
+- **Hide** immediately clears all caption text and labels from the studio preview and OBS. It overrides a freeze.
+- **Resume** shows current captions without replaying missed or expired phrases.
+
+These controls affect visuals only, not capture or broadcast audio. Viewer commands cannot unhide the output. OBS reconnects preserve the state; starting or stopping a session resets it. Studio shortcuts are **Alt + Shift + F / H / R**, except while typing or in Setup.
 
 ## Modes
 

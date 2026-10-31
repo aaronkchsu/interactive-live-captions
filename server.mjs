@@ -106,6 +106,7 @@ const server = http.createServer(async (request, response) => {
             return json(response, 200, { sdp });
           } catch (error) { if (session.voice.owns(body.id)) session.voice.cancel(error.message); throw error; }
         }
+        case '/api/output': session.setOutput(body.state); return json(response, 200, session.snapshot());
         case '/api/settings': session.setSettings(body); await persistSettings(); return json(response, 200, session.snapshot());
         case '/api/session': {
           const mode = body.mode === 'live' ? 'live' : 'demo';

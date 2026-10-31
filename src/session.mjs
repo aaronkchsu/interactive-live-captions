@@ -32,6 +32,7 @@ export class StreamSession {
   begin(mode, provider = 'browser') {
     this.voice.reset(); this.cancelLanes(); this.sessionId = randomUUID(); this.captureId = mode === 'live' ? randomUUID() : '';
     this.effect = null; const connected = this.chat.connected; this.chat.reset(); this.chat.connected = connected;
+    this.outputMode = 'running'; this.frozenPresentation = null; this.outputChangedAt = this.now();
     this.mode = mode; this.captureActive = mode === 'live'; this.captureHeartbeat = this.now(); this.started = this.now(); this.playing = mode === 'demo'; this.phrase = 0;
     this.segments = new Map(); this.display = null; this.draft = null; this.translationGeneration = 0; this.processorGeneration = 0;
     this.secondary = null; this.candidates = []; this.recentObservations = []; this.recentCues = []; this.lastSecondary = -Infinity;
@@ -47,6 +48,7 @@ export class StreamSession {
   owns(input) { return input.streamerId === this.streamerId && input.sessionId === this.sessionId && input.captureId === this.captureId && this.mode === 'live' && this.captureActive; }
   heartbeat() { this.captureHeartbeat = this.now(); }
   stopCapture() {
+    this.outputMode = 'running'; this.frozenPresentation = null; this.outputChangedAt = this.now();
     this.voice.reset(); this.captureActive = false; this.cancelLanes(); this.resetOptional(); this.effect = null;
     this.microphone.status = this.microphone.status === 'error' ? 'error' : 'stopped';
     this.camera.status = 'stopped'; this.previousFrame = null; this.onChange();
@@ -221,7 +223,20 @@ export class StreamSession {
       this.runOptional('chaos', `chaos:${now}`, now, signal => this.provider.chaos(this.context(), recent, settings.secondaryLanguage, signal), this.context(), this.processorGeneration, 'fiction');
     }
   }
+  setOutput(state) {
+    if (!['running', 'frozen', 'hidden'].includes(state)) throw new Error('Choose running, frozen, or hidden captions.');
+    if (state === this.outputMode) return;
+    this.frozenPresentation = state === 'frozen' ? structuredClone(this.currentPresentation()) : null;
+    this.outputMode = state; this.outputChangedAt = this.now(); this.onChange();
+  }
   overlay() {
+    const current = this.currentPresentation();
+    const shown = this.outputMode === 'frozen' && this.frozenPresentation ? this.frozenPresentation : current;
+    return { ...current, caption: shown.caption, draft: shown.draft, secondary: shown.secondary,
+      presentationSettings: shown.settings, captionVoice: shown.voice,
+      output: { state: this.outputMode, changedAt: this.outputChangedAt } };
+  }
+  currentPresentation() {
     const now = this.now(), settings = this.settings();
     const display = this.display?.expiresAt > now ? this.display : null;
     const draft = this.draft?.expiresAt > now && (!display || this.draft.sequence > display.sequence) ? this.draft : null;
@@ -246,6 +261,7 @@ export class StreamSession {
   }
   snapshot() {
     return { ...this.overlay(), settings: this.settings(), baseSettings: this.base, available: this.available, started: this.started, playing: this.playing,
+      currentDraft: this.draft?.expiresAt > this.now() ? this.draft : null,
       transcript: [...this.segments.values()].filter(item => item.final).sort((a, b) => a.sequence - b.sequence),
       events: this.events, twitch: this.twitch, camera: this.camera, processors: this.processorStatus(),
       translation: { ...this.status.translation, latency: this.lanes.translation.metrics.latency },

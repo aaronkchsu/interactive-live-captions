@@ -1,13 +1,14 @@
 export function setupStudio({ api, getState, settings, toast, stopCapture, modeNames }) {
   const $ = selector => document.querySelector(selector), $$ = selector => [...document.querySelectorAll(selector)];
-  let page = 0, previewEpoch = 0, previewStreams = [], previewContext, frame, liveCamera;
+  const order = [1, 0, 2, 3, 4];
+  let page = 1, previewEpoch = 0, previewStreams = [], previewContext, frame, liveCamera;
   function step(index) {
     page = Math.max(0, Math.min(4, index));
     $$('[data-page]').forEach(element => element.hidden = Number(element.dataset.page) !== page);
     $$('[data-step]').forEach(button => { const selected = Number(button.dataset.step) === page; button.classList.toggle('selected', selected); button.setAttribute('aria-current', selected ? 'step' : 'false'); });
-    $('#setup-progress').textContent = `Step ${page + 1} of 5`; $('#setup-back').disabled = page === 0; $('#setup-next').hidden = page === 4;
+    $('#setup-progress').textContent = `Step ${order.indexOf(page) + 1} of 5`; $('#setup-back').disabled = page === order[0]; $('#setup-next').hidden = page === 4;
   }
-  async function open(index = 0) {
+  async function open(index = 1) {
     step(index); if (!$('#connections-dialog').open) $('#connections-dialog').showModal();
     try { const status = await (await fetch('/api/setup')).json(); $('#oauth-callback').textContent = status.callback; $('#twitch-app-details').open = !status.twitchApp; } catch { toast('Could not load connection status.'); }
     await enumerate();
@@ -35,7 +36,7 @@ export function setupStudio({ api, getState, settings, toast, stopCapture, modeN
   }
   $('#connections-dialog').addEventListener('close', stopPreview);
   $$('[data-step]').forEach(button => button.addEventListener('click', () => step(Number(button.dataset.step))));
-  $('#setup-next').addEventListener('click', () => step(page + 1)); $('#setup-back').addEventListener('click', () => step(page - 1));
+  $('#setup-next').addEventListener('click', () => step(order[Math.min(4, order.indexOf(page) + 1)])); $('#setup-back').addEventListener('click', () => step(order[Math.max(0, order.indexOf(page) - 1)]));
   $('#openai-form').addEventListener('submit', event => {
     event.preventDefault(); const key = $('#openai-key').value; $('#openai-key').value = '';
     void busy(event.submitter, async () => { stopCapture(); await api('setup/openai', { key }); $('#openai-result').textContent = 'Key saved locally. Check the connection, then try the translation test.'; }, $('#openai-result'));
@@ -90,7 +91,11 @@ export function setupStudio({ api, getState, settings, toast, stopCapture, modeN
   $('#setup-demo').addEventListener('click', async () => { stopCapture(); stopPreview(); await api('session', { mode: 'demo' }); $('#connections-dialog').close(); toast('Labeled sample captions are playing in the overlay.'); });
   $('#finish-setup').addEventListener('click', async () => { await settings({ setupComplete: true }); $('#connections-dialog').close(); toast('Setup saved. Start a live session when ready.'); });
   return { open, stopPreview, showCamera, render(state) {
-    $('#openai-status').textContent = state.available.openai ? 'KEY CONFIGURED' : 'NO API KEY'; $('#twitch-status').textContent = state.twitch.status.toUpperCase();
+    $('#openai-status').textContent = state.available.openai ? 'KEY CONFIGURED' : 'NO API KEY'; $('#twitch-status').textContent = state.twitch.status === 'connected' ? `Connected · @${state.twitch.channel}` : state.twitch.status;
+    $('#connect-twitch').disabled = !state.available.twitchApp;
+    $('#connect-twitch').textContent = state.available.twitch ? 'Reconnect Twitch account' : 'Connect with Twitch';
+    $('#disconnect-twitch').hidden = !state.available.twitch;
+    $('#twitch-setup-hint').textContent = !state.available.twitchApp ? 'First, add your Twitch app details below. This is a one-time step for the local version.' : state.twitch.status === 'connected' ? 'Chat commands are connected. You can map Channel Points below.' : 'Connect your channel to enable chat commands and Channel Points.';
     if (state.twitch.error) $('#twitch-error').textContent = state.twitch.error;
     $('#microphone-status').textContent = state.microphone.error || `${state.microphone.status} · ${state.microphone.provider || 'no provider'}`;
     $('#camera-enabled').checked = state.baseSettings.cameraEnabled;
