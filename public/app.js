@@ -33,9 +33,20 @@ function render(next) {
   voiceOutput.update(state);
   renderVoice(state);
   renderCaption($('#preview-caption'), state);
+  const outputMode = state.output?.state || 'running';
+  $('.output-controls').dataset.state = outputMode;
+  $('#output-status').textContent = { running: 'Captions on', frozen: 'Captions frozen', hidden: 'Captions hidden' }[outputMode];
+  $('#output-help').textContent = { running: state.mode === 'demo' ? 'Sample captions are showing. Start a live session when ready.' : 'New captions appear as you speak.', frozen: 'Viewers see the held captions. Your transcript keeps updating.', hidden: 'No caption text is visible in OBS. Your transcript keeps updating.' }[outputMode];
+  $('#freeze-captions').setAttribute('aria-pressed', String(outputMode === 'frozen'));
+  $('#hide-captions').setAttribute('aria-pressed', String(outputMode === 'hidden'));
+  $('#freeze-captions').disabled = outputMode !== 'running';
+  $('#hide-captions').disabled = outputMode === 'hidden';
+  $('#resume-captions').disabled = outputMode === 'running';
+  $('#quick-twitch').textContent = state.twitch.status === 'connected' ? `@${state.twitch.channel}` : state.twitch.status === 'disconnected' ? 'Connect your channel' : state.twitch.status;
+  $('#quick-openai').textContent = state.available.openai ? 'Key configured' : 'Add your API key';
   $('#preview-stage').classList.toggle('portrait', state.settings.format === 'portrait'); $('#safe-guide').hidden = !state.settings.safeArea;
   const hiddenSpeech = state.settings.preset === 'describe' || (state.settings.preset === 'chaos' && state.settings.chaosPlacement === 'replace');
-  $('#empty-caption').hidden = hiddenSpeech || !!state.caption?.source || !!state.secondary;
+  $('#empty-caption').hidden = outputMode !== 'running' || hiddenSpeech || !!state.caption?.source || !!state.secondary;
   $('#empty-caption small').textContent = state.microphone.status === 'error' ? 'Check Setup to try again' : 'Listening for English speech';
   const live = state.mode === 'live', listening = live && state.microphone.status === 'listening';
   $('#return-demo').hidden = !live;
@@ -45,8 +56,9 @@ function render(next) {
   $('#playback').setAttribute('aria-label', state.playing ? 'Pause demo' : 'Play demo'); $('#playback use').setAttribute('href', state.playing ? '#i-pause' : '#i-play');
   $('.waveform').classList.toggle('active', (listening || (!live && state.playing)) && !state.settings.reducedMotion);
   $('#audio-label').textContent = live ? `${state.microphone.provider === 'openai' ? 'OpenAI' : 'Browser'} speech · English` : 'Sample captions · no audio';
-  $('#source-transcript').textContent = state.draft?.source || state.caption?.source || 'Your next words will appear here.';
-  $('#translation-transcript').textContent = state.caption?.translation || (live && !state.available.openai ? 'Connect OpenAI for live translation.' : '');
+  const transcriptCaption = state.currentDraft || state.transcript.at(-1) || state.caption;
+  $('#source-transcript').textContent = transcriptCaption?.source || 'Your next words will appear here.';
+  $('#translation-transcript').textContent = transcriptCaption?.translation || (live && !state.available.openai ? 'Connect OpenAI for live translation.' : '');
   $('#translation-transcript').lang = captionLanguage(state.settings.language)?.tag || 'en';
   $('#translation-transcript').dir = captionLanguage(state.settings.language)?.dir || 'ltr';
   $('#language-badge').textContent = captionLanguage(state.settings.language)?.native || state.settings.language; $('#caption-origin').textContent = live ? 'LIVE SPEECH' : 'SAMPLE';
@@ -80,6 +92,17 @@ for (const [value, name] of Object.entries(modeNames)) { const label = document.
 fetch('/api/research').then(response => response.json()).then(items => {
   $('#research-cards').replaceChildren(...items.map(item => { const card = document.createElement('article'); card.className = 'research-card'; for (const [tag, className, content] of [['span', 'tag', item.tag], ['h3', '', item.title], ['p', '', item.text], ['p', 'decision', item.decision]]) { const element = document.createElement(tag); element.className = className; element.textContent = content; card.append(element); } const link = document.createElement('a'); link.href = item.url; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = `${item.source} ↗`; card.append(link); return card; }));
 }).catch(() => {});
+const changeOutput = value => api('output', { state: value }).then(render).catch(error => toast(error.message));
+$('#freeze-captions').addEventListener('click', () => changeOutput('frozen'));
+$('#hide-captions').addEventListener('click', () => changeOutput('hidden'));
+$('#resume-captions').addEventListener('click', () => changeOutput('running'));
+$$('[data-setup]').forEach(button => button.addEventListener('click', () => setup.open(Number(button.dataset.setup))));
+document.addEventListener('keydown', event => {
+  if (!event.altKey || !event.shiftKey || event.ctrlKey || event.metaKey || event.repeat || !state || $('#connections-dialog').open || event.target.closest('input,select,textarea,[contenteditable="true"]')) return;
+  const mode = { KeyF: 'frozen', KeyH: 'hidden', KeyR: 'running' }[event.code];
+  if (!mode || (mode === 'frozen' && state.output?.state !== 'running')) return;
+  event.preventDefault(); void changeOutput(mode);
+});
 const eventStream = new EventSource('/api/events');
 eventStream.onmessage = event => { clearTimeout(outageTimer); outageTimer = null; render(JSON.parse(event.data)); };
 eventStream.onerror = () => { $('#mode-pill').textContent = 'Studio reconnecting…'; clearCaption($('#preview-caption')); if (!outageTimer) outageTimer = setTimeout(() => { stopCapture(); toast('The studio connection was lost. Restart the live session when reconnected.'); }, 15000); };
@@ -121,8 +144,8 @@ $('#upload-backdrop').addEventListener('click', () => $('#video-file').click());
 $('#video-file').addEventListener('change', async event => { const file = event.target.files[0]; if (!file) return; if (backdropUrl) URL.revokeObjectURL(backdropUrl); backdropUrl = URL.createObjectURL(file); const video = $('#background-video'); video.src = backdropUrl; video.hidden = false; try { await video.play(); $('.scene-demo').textContent = 'YOUR PREVIEW VIDEO'; } catch { video.hidden = true; toast('Try an MP4 or WebM video.'); } });
 $('#export-transcript').addEventListener('click', () => {
   if (!state) return;
-  const text = `Streamer Voice Box — speech transcript\n${new Date().toISOString()}\nFiction and commentary are excluded.\n\n` + state.transcript.map(item => `${item.source}\n${item.translation || `[Translation ${item.translationStatus}]`}`).join('\n\n');
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })); const link = document.createElement('a'); link.href = url; link.download = 'streamer-voice-box-transcript.txt'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const text = `AuraMax Captions — speech transcript\n${new Date().toISOString()}\nFiction and commentary are excluded.\n\n` + state.transcript.map(item => `${item.source}\n${item.translation || `[Translation ${item.translationStatus}]`}`).join('\n\n');
+  const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' })); const link = document.createElement('a'); link.href = url; link.download = 'auramax-captions-transcript.txt'; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 });
 setInterval(() => { if (!state) return; const seconds = Math.floor((Date.now() - state.started) / 1000); $('#playback-time').textContent = `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`; if (state.effect) $('#effect-countdown').textContent = `${state.effect.value} · ${Math.max(0, Math.ceil((state.effect.until - Date.now()) / 1000))}s remaining`; }, 500);
 setInterval(() => { if (captureContext) void api('capture/heartbeat', captureContext).catch(() => {}); }, 5000);
