@@ -118,7 +118,7 @@ As checked October 29, 2026, the model is **$0.034 per minute**: roughly **$0.01
 
 ## Caption languages
 
-The shared catalog in `public/languages.js` drives studio choices, server validation, provider prompts, Twitch moderator commands, and OBS language/direction metadata. There are 20 caption languages: English source captions and 19 translation targets. Spoken input remains English. Chinese voice dubbing is a separate feature and is not expanded by this catalog.
+The shared catalog in `public/languages.js` drives studio choices, server validation, provider prompts, Twitch moderator commands, and OBS language/direction metadata. There are 21 caption languages: English source captions and 20 translation targets. Spoken input remains English. Chinese voice dubbing is a separate feature and is not expanded by this catalog.
 
 Moderators can use `!captions fr`, `!captions ar`, or any translation code in the catalog. Secondary descriptions, Chorus, and Chaos use the same language catalog. Arabic and Hebrew caption text renders right to left while English labels remain left to right.
 
@@ -127,3 +127,5 @@ Recorded samples remain limited to English/Chinese/Spanish/Japanese. Selecting a
 After editing the catalog, run `npm run website:languages` to refresh the static landing-page list; `npm run website:check` detects drift.
 
 Validation on October 31, 2026: 51 automated tests passed, including all 19 targets through moderator-command → session → provider → overlay/history with mocked transport, missing-demo handling, invalid-language rejection, and RTL metadata. All 19 real API requests returned translations for the same short synthetic English phrase; this was not a microphone test or fluent-reader review. Arabic output was inspected in desktop and portrait bilingual layouts with reduced motion. Raw synthetic results and API-reported usage are kept locally in ignored `artifacts/language-smoke-result.json`. Re-run explicitly with `node scripts/smoke-languages.mjs --paid-synthetic-test` (uses saved key/API credits).
+
+Slovak was added after the streamer identified Slovak and Turkish as important community languages; Turkish was already included. The starter list was a product selection, not audience analytics or a complete language-coverage claim. All 51 tests passed again with Slovak included, and a separate real API synthetic-text request returned Slovak successfully (local report: `artifacts/slovak-smoke-result.json`). Fluent-reader validation remains outstanding.
