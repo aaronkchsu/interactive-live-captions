@@ -13,7 +13,7 @@ function validateCue(value, kind) {
 export class OpenAIProvider {
   constructor({ credentials, models = {}, fetcher = fetch, onUsage = (_context, _usage) => {} }) {
     this.credentials = credentials; this.fetcher = fetcher; this.onUsage = onUsage;
-    this.models = { transcription: 'gpt-live-transcribe', translation: 'gpt-6-luna', vision: 'gpt-6-luna', audio: 'gpt-audio-1.5', commentary: 'gpt-6-luna', ...models };
+    this.models = { transcription: 'gpt-live-transcribe', translation: 'gpt-6-luna', vision: 'gpt-6-luna', audio: 'gpt-audio-1.5', commentary: 'gpt-6-luna', dubbing: 'gpt-realtime-translate', ...models };
   }
   async request(context, path, body, signal) {
     const { openaiKey } = await this.credentials.get(context);
@@ -90,6 +90,19 @@ export class OpenAIProvider {
     const response = await this.fetcher('https://api.openai.com/v1/realtime/calls', { method: 'POST', headers: { Authorization: `Bearer ${openaiKey}` }, body: form, signal: AbortSignal.any([AbortSignal.timeout(15000), ...(signal ? [signal] : [])]) });
     if (!response.ok) throw new Error(`OpenAI audio connection failed (${response.status}). Check key, model access and credits.`);
     return response.text();
+  }
+  async negotiateTranslation(context, sdp, signal) {
+    const combined = AbortSignal.any([AbortSignal.timeout(12000), ...(signal ? [signal] : [])]);
+    const secret = await this.request(context, 'realtime/translations/client_secrets', {
+      session: { model: this.models.dubbing, audio: { output: { language: 'zh' } } }
+    }, combined);
+    // Only the negotiated SDP leaves the server. Neither key is returned to OBS or studio.
+    if (typeof secret.value !== 'string' || !secret.value) throw new Error('Translation access was not granted for this account.');
+    const result = await this.fetcher('https://api.openai.com/v1/realtime/translations/calls', {
+      method: 'POST', headers: { Authorization: `Bearer ${secret.value}`, 'Content-Type': 'application/sdp' }, body: sdp, signal: combined
+    });
+    if (!result.ok) throw new Error(`Chinese voice connection failed (${result.status}). Check model access and credits.`);
+    return result.text();
   }
   async validate(context) {
     const { openaiKey } = await this.credentials.get(context);

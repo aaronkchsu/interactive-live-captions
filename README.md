@@ -1,6 +1,17 @@
-# Streamer Voice Box
+# AuraMax — TwitchCon competition project
 
 A local Twitch caption studio with live translation, streamer observations, Chat Chorus, and clearly labeled fictional Chaos commentary. One Node 24 server and native browser modules; no runtime dependencies or frontend build step.
+
+## One repository, two experiences
+
+- **Live studio:** `server.mjs`, `src/`, and `public/` — local captions, Twitch controls, OBS overlay, and translated broadcast audio.
+- **Public website:** [`website/dist/`](website/dist/) — the interactive landing page at [auramaxcap.com](https://auramaxcap.com), with an early-access form. See [website setup and deployment](website/README.md).
+- **Project evidence:** [`docs/`](docs/) — architecture, research, and verification results. The website playground is explicitly scripted; real-provider results and remaining live acceptance gates are documented separately.
+- **Checks:** [`tests/`](tests/) — isolated fixtures and simulated soak; no real API keys required.
+
+Use this repository for both experiences. The studio stays at the root so existing commands, local credentials, and OBS URLs keep working. Cloudflare receives **only `website/dist/`**, never the studio server or local credentials. Website hosting currently uses Direct Upload, so a Git commit does not automatically redeploy the public site.
+
+Preview the website from the repository root with `npm run website:dev` (Python 3 required), then open http://localhost:4320. `npm run website:check` checks its JavaScript syntax. Studio instructions follow below.
 
 ## Start and try it
 
@@ -80,3 +91,27 @@ node scripts/smoke-providers.mjs --paid-synthetic-test
 This performs five small requests and writes a secret-free result to `artifacts/provider-smoke-result.json`. It does not record devices or verify Twitch/OBS.
 
 See [architecture](docs/architecture.md), [verification results and remaining gates](docs/verification.md), and [caption research](docs/research.md).
+
+## Chinese voice for the whole stream
+
+The **Say it in Chinese** panel adds a 20-second live speech translation effect. You keep speaking English; OpenAI’s `gpt-realtime-translate` produces Chinese audio that adapts to your tone. Exact voice identity and live translation quality still need your listening test.
+
+The **separate audio source** is [http://localhost:4317/voice](http://localhost:4317/voice). Add it to OBS as a Browser Source, enable **Control audio via OBS**, keep **Audio Monitoring: Monitor Off**, and select the audio track used by your stream. Leave **Shutdown source when not visible** and automatic scene-refresh off; reuse that source across scenes.
+
+In the studio:
+
+1. Enable **Route microphone through Voice Box**, then start a live session in Chrome/Edge.
+2. Use **Test OBS sound** and confirm the new source’s mixer meter responds to your microphone.
+3. **Mute the duplicate microphone source (Mic/Aux) in OBS.** Voice Box does not remotely change OBS mute buttons. Your microphone now reaches the stream through the new audio source. Leave game/music sources as they are.
+4. Click **Speak Chinese · 20 seconds** and keep speaking. Your English stays live while Chinese prepares. The mixer waits for actual non-silent translated audio (not just an open connection), then crossfades using a 120ms onset buffer to preserve the first syllable. The 20-second countdown starts at this handoff. The mic is still captured for speech recognition and translation. If no audio arrives within the connection deadline, the effect cancels with English unchanged.
+5. After 20 seconds, new input to the translation connection stops; up to five more seconds are allowed for pending speech before normal audio returns. **Restore my voice now** cancels immediately. Connection/model failures restore the normal microphone within the connected Voice Box feed.
+
+The feed is encoded into your Twitch broadcast, so all viewers hear the same result. It is not a viewer-specific audio selection. An **AI DUB · 中文** label and translated text replace normal caption presentation during the effect; original speech history remains intact.
+
+This avoids muting English during translation startup; it does not eliminate the model's translation delay. The first Chinese phrase may repeat the meaning of English viewers just heard while the translation warmed up. For a demo, click the effect while saying a short transition such as “Let's switch to Chinese,” then continue naturally. Real microphone/OBS timing still needs validation after changes.
+
+Enable **Let viewers activate Chinese voice** to allow `!voice zh` or map a reward to **Speak Chinese · 20 seconds**. Viewer access is off by default. The existing shared cooldown applies; repeated activations do not extend an active voice effect. Moderator `!mode reset`, manual settings changes and stopping the session cancel dubbing.
+
+Keep the studio running. If the studio or audio source closes, the Voice Box route cannot carry the microphone: **unmute the original OBS microphone** to recover. Routing adds a local WebRTC hop; check lip sync and adjust OBS synchronization if needed. A normal browser opened at `/voice` is an audible preview and occupies the single receiver slot; close it before connecting OBS.
+
+As checked October 29, 2026, the model is **$0.034 per minute**: roughly **$0.0113 for 20 seconds**, plus connection/finish time. Existing caption, observation and commentary usage is separate. A single feed serves all viewers, so AI cost does not multiply with viewer count. See [OpenAI model pricing](https://developers.openai.com/api/docs/models/gpt-realtime-translate).

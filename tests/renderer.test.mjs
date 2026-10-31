@@ -20,3 +20,11 @@ test('an unchanged overlay snapshot repaints after reconnect clears the DOM', t 
   assert.equal(target.querySelector('.caption-block'), null); assert.match(target.querySelector('.chaos-badge').textContent, /FICTION/);
   state.settings.chaosPlacement = 'alongside'; renderCaption(target, state); assert.equal(target.querySelector('.caption-source').textContent, 'hello');
 });
+test('dub captions are labeled and restore speech after the effect without changing its transcript', t => {
+  const previous = globalThis.document; globalThis.document = { createElement: () => new Element(), createTextNode: text => ({ textContent: text }) };
+  t.after(() => { if (previous === undefined) delete globalThis.document; else globalThis.document = previous; });
+  const target = new Element(), caption = { id: 'speech', source: 'Hello everyone', translation: '大家好' };
+  const state = { sessionId: 's', settings: { ...defaults }, caption, voice: { effect: { id: 'dub', phase: 'active', text: '大家好' } } };
+  renderCaption(target, state); assert.equal(target.querySelector('.caption-block'), null); assert.equal(target.querySelector('.dub-caption').textContent, '大家好'); assert.match(target.querySelector('.dub-badge').textContent, /AI DUB/);
+  state.voice.effect = null; renderCaption(target, state); assert.equal(target.querySelector('.caption-source').textContent, 'Hello everyone'); assert.equal(caption.source, 'Hello everyone');
+});

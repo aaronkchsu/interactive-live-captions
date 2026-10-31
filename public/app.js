@@ -1,5 +1,6 @@
 import { renderCaption, clearCaption } from '/caption-renderer.js';
 import { createCapture } from '/microphone.js';
+import { createBroadcastAudio } from '/broadcast-audio.js';
 import { setupStudio } from '/setup.js';
 const $ = selector => document.querySelector(selector), $$ = selector => [...document.querySelectorAll(selector)];
 export const modeNames = { captions: 'Captions', context: 'Full Context', describe: 'Description Only', chorus: 'Chat Chorus', chaos: 'Chaos' };
@@ -12,7 +13,8 @@ async function api(path, data = {}, signal) {
   const result = await response.json(); if (!response.ok) throw new Error(result.error || 'This action could not be completed.'); return result;
 }
 async function settings(patch) { try { render(await api('settings', patch)); } catch (error) { toast(error.message); } }
-function stopCapture() { startEpoch++; capture?.stop(); capture = null; captureContext = null; pendingStart = false; }
+const voiceOutput = createBroadcastAudio({ send: api, notify: toast });
+function stopCapture() { voiceOutput.stop(); startEpoch++; capture?.stop(); capture = null; captureContext = null; pendingStart = false; }
 function report(kind, status, error = '') {
   if (!captureContext) return;
   if (!['camera', 'microphone'].includes(kind)) { if (error) toast(error); return; }
@@ -24,6 +26,8 @@ const setup = setupStudio({ api, getState: () => state, settings, toast, stopCap
 function render(next) {
   state = next;
   if (captureContext && (state.sessionId !== captureContext.sessionId || ['stopped', 'error'].includes(state.microphone.status))) stopCapture();
+  voiceOutput.update(state);
+  renderVoice(state);
   renderCaption($('#preview-caption'), state);
   $('#preview-stage').classList.toggle('portrait', state.settings.format === 'portrait'); $('#safe-guide').hidden = !state.settings.safeArea;
   const hiddenSpeech = state.settings.preset === 'describe' || (state.settings.preset === 'chaos' && state.settings.chaosPlacement === 'replace');
@@ -103,7 +107,7 @@ $('#start-microphone').addEventListener('click', async () => {
     const next = await api('session', { mode: 'live', provider });
     if (epoch !== startEpoch) return;
     captureContext = { streamerId: next.streamerId, sessionId: next.sessionId, captureId: next.captureId }; render(next);
-    capture = createCapture({ context: captureContext, provider, getSettings: () => state.settings, send: api, report, onCamera: stream => setup.showCamera(stream) });
+    capture = createCapture({ context: captureContext, provider, getSettings: () => state.settings, send: api, report, onMicrophone: stream => stream ? voiceOutput.attach(stream, captureContext) : voiceOutput.stop(), onCamera: stream => setup.showCamera(stream) });
     await capture.ready;
   } catch (error) { if (epoch === startEpoch) { toast(error.message); stopCapture(); } }
   finally { if (epoch === startEpoch) { pendingStart = false; if (state) render(state); } }
@@ -118,3 +122,24 @@ $('#export-transcript').addEventListener('click', () => {
 setInterval(() => { if (!state) return; const seconds = Math.floor((Date.now() - state.started) / 1000); $('#playback-time').textContent = `${Math.floor(seconds / 60).toString().padStart(2, '0')}:${(seconds % 60).toString().padStart(2, '0')}`; if (state.effect) $('#effect-countdown').textContent = `${state.effect.value} · ${Math.max(0, Math.ceil((state.effect.until - Date.now()) / 1000))}s remaining`; }, 500);
 setInterval(() => { if (captureContext) void api('capture/heartbeat', captureContext).catch(() => {}); }, 5000);
 window.addEventListener('beforeunload', () => { if (captureContext) navigator.sendBeacon('/api/microphone', new Blob([JSON.stringify({ ...captureContext, status: 'stopped' })], { type: 'application/json' })); stopCapture(); setup.stopPreview(); });
+
+function renderVoice(next) {
+  const voice = next.voice, active = voice?.effect;
+  inputValue($('#voice-enabled'), next.baseSettings.voiceEnabled);
+  inputValue($('#voice-viewers'), next.baseSettings.voiceViewerEnabled);
+  $('#voice-route-status').textContent = voice?.error || (voice?.output === 'connected' ? 'Audio receiver connected · verify the OBS mixer' : voice?.output === 'waiting for microphone' ? 'Audio source found · waiting for microphone routing' : 'Add the OBS audio source to connect');
+  $('#voice-route-status').dataset.connected = String(voice?.output === 'connected');
+  $('#start-voice').disabled = !!active || !next.baseSettings.voiceEnabled || next.mode !== 'live' || next.microphone.status !== 'listening' || !next.available.openai || voice?.output !== 'connected';
+  $('#stop-voice').hidden = !active;
+  $('#voice-countdown').textContent = active ? active.phase === 'connecting' ? 'Preparing Chinese… your English is still live' : active.phase === 'draining' ? 'Finishing the last phrase…' : `Chinese voice · ${Math.max(0, Math.ceil((active.until - Date.now()) / 1000))}s` : 'Your voice. A different language. For everyone.';
+  $('#voice-progress').value = active?.phase === 'active' ? Math.max(0, (active.until - Date.now()) / 1000) : 0;
+  $('#voice-output-text').textContent = active?.text || 'Chinese speech appears here during the effect.';
+  $('#voice-panel').dataset.active = String(!!active);
+}
+$('#voice-audio-address').textContent = `${location.origin}/voice`;
+$('#copy-voice-link').addEventListener('click', async () => { try { await navigator.clipboard.writeText(`${location.origin}/voice`); toast('Audio source link copied. Add a separate OBS Browser Source.'); } catch { toast(`Audio source: ${location.origin}/voice`); } });
+$('#voice-enabled').addEventListener('change', event => settings({ voiceEnabled: event.target.checked }));
+$('#voice-viewers').addEventListener('change', event => settings({ voiceViewerEnabled: event.target.checked }));
+$('#start-voice').addEventListener('click', async () => { void voiceOutput.resume(); try { const result = await api('voice/start'); if (!result.applied) toast(result.message); } catch (error) { toast(error.message); } });
+$('#stop-voice').addEventListener('click', () => { voiceOutput.restore(); void api('voice/stop').catch(error => toast(error.message)); });
+$('#voice-test-tone').addEventListener('click', () => api('voice/test-tone').then(() => toast('A short test tone was sent to the audio source. Check its OBS meter.')).catch(error => toast(error.message)));

@@ -1,6 +1,6 @@
 # Streamer Voice Box
 
-This repository owns only Interactive Live Captions. Do not edit sibling TwitchCon projects.
+This repository owns the AuraMax live caption studio and its public landing page in website/. Do not edit sibling TwitchCon projects. Treat website/ as the canonical website source; the earlier standalone landing-page checkout is a historical backup. Deploy only website/dist/ to public static hosting.
 
 - Keep the application small: one Node server, native browser modules, CSS, and SVG. Node 24+; no runtime dependencies.
 - Fiction and commentary belong only in their labeled secondary tracks.

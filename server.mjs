@@ -27,7 +27,7 @@ if (!testMode) {
   }
   if (Object.keys(patch).length) await credentials.update(owner, patch);
 }
-const models = Object.fromEntries(Object.entries({ transcription: 'TRANSCRIPTION_MODEL', translation: 'TRANSLATION_MODEL', vision: 'VISION_MODEL', audio: 'AUDIO_OBSERVATION_MODEL', commentary: 'COMMENTARY_MODEL' }).filter(([, key]) => process.env[key]).map(([name, key]) => [name, process.env[key]]));
+const models = Object.fromEntries(Object.entries({ transcription: 'TRANSCRIPTION_MODEL', translation: 'TRANSLATION_MODEL', vision: 'VISION_MODEL', audio: 'AUDIO_OBSERVATION_MODEL', commentary: 'COMMENTARY_MODEL', dubbing: 'DUBBING_MODEL' }).filter(([, key]) => process.env[key]).map(([name, key]) => [name, process.env[key]]));
 let session;
 const provider = new OpenAIProvider({ credentials, models, onUsage: (context, usage) => {
   if (session && context.streamerId === session.streamerId && context.sessionId === session.sessionId) {
@@ -62,6 +62,7 @@ const server = http.createServer(async (request, response) => {
       if ((request.headers.origin && request.headers.origin !== `http://${request.headers.host}`) || request.headers['sec-fetch-site'] === 'cross-site') return json(response, 403, { error: 'Only same-origin studio requests are accepted.' });
     }
     if (request.method === 'GET') {
+      if (testMode && url.pathname === '/test/broadcast') { response.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' }); response.end(await readFile(resolve(root, 'tests/browser-broadcast.html'))); return; }
       if (url.pathname === '/api/state') return json(response, 200, session.snapshot());
       if (url.pathname === '/api/overlay/state') return json(response, 200, session.overlay());
       if (url.pathname === '/api/research') return json(response, 200, research);
@@ -84,6 +85,27 @@ const server = http.createServer(async (request, response) => {
     if (request.method === 'POST' && url.pathname.startsWith('/api/')) {
       const body = JSON.parse(await readBody(request, url.pathname.startsWith('/api/media/') ? 1000000 : 150000) || '{}');
       switch (url.pathname) {
+        case '/api/voice/receiver/start': return json(response, 200, session.voice.claim(body));
+        case '/api/voice/receiver/poll': return json(response, 200, session.voice.poll(body));
+        case '/api/voice/receiver/stop': session.voice.release(body.token); return json(response, 200, { ok: true });
+        case '/api/voice/signal': capture(body); return json(response, 200, { offer: session.base.voiceEnabled ? session.voice.offer() : null });
+        case '/api/voice/answer': capture(body); session.voice.answer(body.id, body.sdp); return json(response, 200, { ok: true });
+        case '/api/voice/status': capture(body); return json(response, 200, { accepted: session.voice.status(body) });
+        case '/api/voice/stop': session.voice.cancel(); return json(response, 200, { ok: true });
+        case '/api/voice/test-tone': session.voice.testTone(); return json(response, 200, { ok: true });
+        case '/api/voice/start': return json(response, 200, session.action({ id: randomUUID(), kind: 'voice', value: 'zh', moderator: true, origin: 'studio', actor: 'You' }));
+        case '/api/voice/sdp': {
+          capture(body); const effect = session.voice.effect;
+          if (!effect || effect.id !== body.id || effect.phase !== 'connecting' || effect.negotiating || !session.voice.connected() || !session.base.voiceEnabled) throw new Error('Voice effect is unavailable or already connecting.');
+          if (typeof body.sdp !== 'string' || !body.sdp.startsWith('v=0') || body.sdp.length > 100000) throw new Error('Invalid voice offer.');
+          effect.negotiating = true;
+          const controller = new AbortController(); response.on('close', () => { if (!response.writableEnded) controller.abort(); });
+          try {
+            const sdp = await provider.negotiateTranslation(session.context(), body.sdp, controller.signal);
+            capture(body); if (!session.voice.owns(body.id)) throw new Error('Voice effect ended.');
+            return json(response, 200, { sdp });
+          } catch (error) { if (session.voice.owns(body.id)) session.voice.cancel(error.message); throw error; }
+        }
         case '/api/settings': session.setSettings(body); await persistSettings(); return json(response, 200, session.snapshot());
         case '/api/session': {
           const mode = body.mode === 'live' ? 'live' : 'demo';
@@ -110,7 +132,7 @@ const server = http.createServer(async (request, response) => {
         }
         case '/api/playback': if (session.mode !== 'demo') throw new Error('Playback applies to sample captions.'); session.playing = !session.playing; if (session.playing) session.showDemo(); return json(response, 200, session.snapshot());
         case '/api/action': return json(response, 200, session.action({ id: randomUUID(), kind: body.kind, value: body.value, moderator: true, origin: 'demo', actor: 'Studio preview' }));
-        case '/api/effects/reset': session.effect = null; session.resetOptional(); if (session.mode === 'demo') session.showDemo(); return json(response, 200, session.snapshot());
+        case '/api/effects/reset': session.voice.cancel(); session.effect = null; session.resetOptional(); if (session.mode === 'demo') session.showDemo(); return json(response, 200, session.snapshot());
         case '/api/reset': session.setSettings(defaults); session.lastAction = -Infinity; await persistSettings(); return json(response, 200, session.snapshot());
         case '/api/setup/openai': {
           if (typeof body.key !== 'string' || body.key.length > 512) throw new Error('Enter an OpenAI key.');
@@ -140,7 +162,7 @@ const server = http.createServer(async (request, response) => {
         default: return json(response, 404, { error: 'Unknown studio action.' });
       }
     }
-    const pathname = url.pathname === '/' ? '/index.html' : url.pathname === '/overlay' ? '/overlay.html' : url.pathname;
+    const pathname = url.pathname === '/' ? '/index.html' : url.pathname === '/overlay' ? '/overlay.html' : url.pathname === '/voice' ? '/voice.html' : url.pathname;
     const path = resolve(root, 'public', `.${decodeURIComponent(pathname)}`);
     if (!path.startsWith(resolve(root, 'public') + sep)) return json(response, 403, { error: 'Forbidden' });
     const content = await readFile(path);
