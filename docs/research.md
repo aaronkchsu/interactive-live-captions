@@ -61,3 +61,17 @@ The initial phrase hold (5 sec), caption size (42 relative units), entry duratio
 - Browser inspection found an emphasis pseudo-element adding unwanted layout space; it was removed.
 - Tests protect against old translations resurfacing after language/session changes and late microphone callbacks overwriting demo mode.
 - Save actual before/after captures and real account tests during subsequent iterations. Do not present fixture playback as live AI output.
+
+## Landing-page audience evidence (checked 2026-10-30)
+
+The landing page leads with the sound-off comprehension problem, using Twitch-specific primary sources rather than combining unrelated platform audience estimates.
+
+- [Amazon Ads, September 30, 2025](https://advertising.amazon.com/en-gb/library/expert-advice/rachel-delphin-twitch-con) reports **105 million monthly Twitch viewers**. This is the overall audience, not a count of mobile or muted viewers.
+- [Twitch, July 29, 2024](https://blog.twitch.tv/en/2024/07/29/find-content-you-love-faster-with-the-new-twitch-mobile-app/) reports that **over 50%** primarily use their phone in a given month and **almost three quarters of new viewers** first watch on mobile. These populations differ: the second statistic describes new viewers, not all Twitch users. The page retains the original reporting date.
+- The same Twitch announcement says its redesigned mobile feed opened muted by default, with a setting to change that behavior. The landing page presents this as a dated 2024 product fact, not a verified current mute rate. Most viewing hours were still on desktop according to that announcement.
+
+**Messaging decision:** “MUTED.” → “Great stream. Missing context.” → “Sound off. Story on.” The opportunity is comprehension and participation; no measured retention increase or guaranteed channel growth is claimed. The audience section addresses bilingual, global, sound-off, and chat-first communities without equating language with race.
+
+**Excluded claims:** no reliable Twitch-wide evidence was found for 30% audience loss or a specific number of muted viewers. “Billions watch live on mobile” cannot be established from the provided cross-platform estimates, which mix ad reach, app audiences, and general video rather than live viewing. The [Voices 2024 survey](https://www.voices.com/company/press/press-releases/audio-boosts-memorability-and-engagement-of-advertisements-voices-study-finds) covers 1,000 Americans and self-reported sound habits on other platforms; it does not measure Twitch mobile mute occasions. Do not convert those estimates into factual loss claims.
+
+**Capability boundary:** the public demo is visibly scripted. It demonstrates English plus Chinese, Spanish, and Japanese captions. “Any language,” French support, superiority over competitors, and automated hosted onboarding are not advertised as shipped capabilities.
