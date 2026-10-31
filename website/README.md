@@ -32,13 +32,14 @@ The `.openai/hosting.json` project is for an owner-private Sites review deployme
 
 ## Content and QA
 
-- All transcript, translation, chat, and Chaos content in the playground is scripted and labeled illustrative.
+- All transcript, translation, chat, and Chaos content in the playground is scripted and labeled illustrative. The demo opens in Chaos and offers Just chatting, Snack break, and Minecraft sample moments. The photo does not depict the fictional scenarios or actual speech.
+- `dist/assets/streamer.jpg`: photo by Yan Krukau, [Pexels photo 9072382](https://www.pexels.com/photo/a-man-in-a-black-shirt-talking-on-a-headphone-s-mic-while-looking-at-a-computer-monitor-9072382/), used under the [Pexels license](https://www.pexels.com/license/) checked 2026-10-30. It is illustrative stock imagery, not a user testimonial or endorsement. The public page credits the photographer.
 - Chaos keeps accurate speech separate and shows a persistent fiction label.
-- The problem-first editorial layout uses oversized type, a restrained gold accent, sourced audience figures, and a scripted waveform demo. The old hypothetical audience-loss calculator has been removed.
+- The problem-first editorial layout uses oversized type, a restrained gold accent, sourced audience figures, and a scripted photo-backed demo. The old hypothetical audience-loss calculator has been removed.
 - Audience figures: 105 million monthly Twitch viewers (Amazon Ads, September 2025), over 50% primarily mobile and almost three quarters of new viewers first watching on mobile (Twitch, July 2024). Sources and dates appear beside the figures. The historical muted-feed default is dated; mobile use does not establish a mute rate. See ../docs/research.md.
 - Form publication, private response-sheet access, feature prefill, and a test submission were checked. Public Cloudflare Pages HTTPS, the Chinese translation demo, and the signup destination were verified. Both custom-domain bindings and their DNS records were created. Both hostnames are Active with SSL and verified in the browser.
 - Redesign checked at 1440px desktop and 390px mobile on 2026-10-30, without horizontal overflow. Chinese/Spanish/Japanese translation fixtures, Chat Chorus, Chaos labeling, valid/invalid chat commands, caption hiding/restoration, style switch, pause, audience shortcuts, expandable details, and signup feature prefill were verified. No browser console errors were observed.
-- Reduced-motion preference pauses the scripted timer and removes waveform animation. This behavior was inspected in source; OS preference emulation was not available in this browser session.
+- Reduced-motion preference pauses the scripted timer and disables automatic sample rotation. This behavior was inspected in source; OS preference emulation was not available in this browser session.
 - No analytics, secret storage, microphone access, or Twitch authorization occurs on this marketing page. Google Fonts are loaded from Google's font service.
 
 Local screenshots and deployment archives live in ignored `artifacts/` and are not published.
