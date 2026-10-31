@@ -15,6 +15,7 @@ export const captionLanguages = Object.freeze([
   { code: 'uk', name: 'Ukrainian', native: 'Українська', tag: 'uk', dir: 'ltr' },
   { code: 'pl', name: 'Polish', native: 'Polski', tag: 'pl', dir: 'ltr' },
   { code: 'nl', name: 'Dutch', native: 'Nederlands', tag: 'nl', dir: 'ltr' },
+  { code: 'sk', name: 'Slovak', native: 'Slovenčina', tag: 'sk', dir: 'ltr' },
   { code: 'tr', name: 'Turkish', native: 'Türkçe', tag: 'tr', dir: 'ltr' },
   { code: 'vi', name: 'Vietnamese', native: 'Tiếng Việt', tag: 'vi', dir: 'ltr' },
   { code: 'id', name: 'Indonesian', native: 'Bahasa Indonesia', tag: 'id', dir: 'ltr' },
