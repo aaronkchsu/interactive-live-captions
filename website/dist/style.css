@@ -16,3 +16,7 @@
 /* Let visitors try the product before the audience evidence. */
 .hero{padding-bottom:55px}.solution-heading{align-items:start}.solution-heading>div{min-width:0;flex:1}.solution-heading h2{font-size:clamp(42px,4.5vw,65px)}.solution-heading>p{max-width:320px;align-self:end}.audience{border-top:1px solid var(--line)}
 @media(max-width:680px){.hero{padding-bottom:30px}.solution-heading h2{font-size:43px}.solution-heading>p{max-width:none}}
+
+/* Keep the survey population and date beside the sound-off statistic. */
+.evidence-intro{margin-bottom:60px}.survey-title{display:grid;grid-template-columns:1fr 2fr;align-items:center;gap:40px;margin-top:24px;font-size:clamp(30px,3.3vw,47px);line-height:1.14;letter-spacing:-.045em}.survey-percent{font-size:clamp(110px,13vw,185px);line-height:1;font-weight:600;color:var(--gold);letter-spacing:-.075em}.survey-source{margin:22px 0 0 calc((100% - 40px)/3 + 40px);font-size:12px;line-height:1.8;color:var(--muted)}
+@media(max-width:680px){.evidence-intro{margin-bottom:38px}.survey-title{grid-template-columns:1fr;gap:18px;font-size:32px}.survey-percent{font-size:114px}.survey-source{margin:20px 0 0;font-size:11px}}
