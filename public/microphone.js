@@ -1,5 +1,5 @@
 // A capture handle exists before permissions resolve. Late streams are always released.
-export function createCapture({ context, provider, getSettings, send, report, onCamera = () => {} }) {
+export function createCapture({ context, provider, getSettings, send, report, onMicrophone = () => {}, onCamera = () => {} }) {
   const abort = new AbortController();
   let stopped = false, stream, camera, peer, recognition, audioContext, audioNode, muteGain;
   let commitTimer, cameraTimer, retryTimer, draftTimer, pendingDraft, lastDraft = 0, sequence = 0;
@@ -19,7 +19,7 @@ export function createCapture({ context, provider, getSettings, send, report, on
     if (stopped) return; stopped = true; abort.abort();
     clearTimeout(draftTimer); clearTimeout(retryTimer); clearInterval(commitTimer); clearInterval(cameraTimer);
     if (recognition) { recognition.onend = null; recognition.abort(); }
-    peer?.close(); for (const track of tracks) track.stop(); tracks.clear();
+    onMicrophone(null); peer?.close(); for (const track of tracks) track.stop(); tracks.clear();
     audioNode?.disconnect(); muteGain?.disconnect(); void audioContext?.close();
     if (cameraVideo) cameraVideo.srcObject = null; onCamera(null);
   };
@@ -29,6 +29,7 @@ export function createCapture({ context, provider, getSettings, send, report, on
       const settings = getSettings();
       stream = stoppedCheck(await navigator.mediaDevices.getUserMedia({ audio: { ...(settings.microphoneId ? { deviceId: { exact: settings.microphoneId } } : {}), echoCancellation: true, noiseSuppression: true }, video: false }));
       if (stopped) return;
+      onMicrophone(stream);
       // One microphone stream feeds transcription and optional observations.
       try {
       audioContext = new AudioContext({ sampleRate: 24000 });

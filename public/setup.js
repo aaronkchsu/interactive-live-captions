@@ -61,7 +61,7 @@ export function setupStudio({ api, getState, settings, toast, stopCapture, modeN
       const row = document.createElement('label'); row.className = 'reward-row';
       const title = document.createElement('span'); title.textContent = `${reward.title} · ${reward.cost} points`;
       const select = document.createElement('select'); select.setAttribute('aria-label', `Effect for ${reward.title}`);
-      select.append(new Option('No effect', ''), ...Object.entries(modeNames).map(([id, name]) => new Option(name, id)));
+      select.append(new Option('No effect', ''), ...Object.entries({ ...modeNames, 'voice:zh': 'Speak Chinese · 20 seconds' }).map(([id, name]) => new Option(name, id)));
       select.value = getState().baseSettings.rewardMappings[reward.id] || '';
       select.addEventListener('change', () => { const mappings = { ...getState().baseSettings.rewardMappings }; if (select.value) mappings[reward.id] = select.value; else delete mappings[reward.id]; void settings({ rewardMappings: mappings }); });
       row.append(title, select); $('#reward-mappings').append(row);
