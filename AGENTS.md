@@ -11,3 +11,10 @@ This repository owns the AuraMax live caption studio and its public landing page
 - Keep display state separate from audio and provider adapters. Reject stale asynchronous results when sessions or languages change.
 - Research claims belong in docs/research.md with limitations. Values for timing, phrase length, and animation are hypotheses, not scientifically proven universal optima.
 - Run npm test for behavior changes and inspect desktop, portrait, reduced-motion, and bilingual layouts in a browser.
+
+## AuraMax copy
+
+- Use concise, concrete language across the product and website. Every line should name a feature, explain a user problem or action, or provide evidence.
+- Remove filler slogans and redundant subtitles instead of replacing them with another slogan. The user explicitly rejected “Readable by design” as meaningless fluff.
+- Prefer descriptive headings such as “Caption reading speed” over vague phrases such as “Leave room to read it again.” Preserve sources and meaningful limitations.
+- Do not reintroduce previously rejected filler, including “Your chat deserves a new toy,” decorative “Built with OpenAI Codex” labels, or casual overuse of “literally.”
