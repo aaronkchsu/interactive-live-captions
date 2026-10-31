@@ -49,9 +49,9 @@ The live studio now has 21 caption languages (English source plus 20 translation
 
 Research notes live at `dist/research.html`, linked from the landing-page navigation. The static page preserves the studio’s original study links and limitations. It does not load the playground script or make API requests.
 
-## Yellow/pink design exploration (local preview)
+## Yellow/pink design and rollback
 
-The original cream/gold design is preserved at tag `auramax-editorial-before-color` (commit `d87a4f3`). The separate `design/yellow-pink-preview` branch adds `dist/signal.css` to the landing page; all visible copy and demo behavior remain unchanged. Yellow highlights streamer speech and pink highlights community/Chaos commentary. Research and the studio retain their current styles pending a design decision. This exploration has not been deployed.
+The original cream/gold design is preserved at tag `auramax-editorial-before-color` (commit `d87a4f3`). The approved `design/yellow-pink-preview` branch was merged into `main` and adds `dist/signal.css` to the landing page; all visible copy and demo behavior remain unchanged. Yellow highlights streamer speech and pink highlights community/Chaos commentary. Research and the studio retain their current styles pending a design decision. The landing-page design was approved for publication on October 31, 2026; the original remains available through the rollback tag.
 
 For side-by-side review, the ignored `artifacts/brand-review/` directory contains `original/` and `yellow/` static snapshots. Serve that directory on port 4320 to compare `/original/` and `/yellow/`. Refresh the yellow snapshot after further changes. The Git tag is the durable original; the snapshots are only review aids.
 
