@@ -1,3 +1,4 @@
+import { captionLanguages, translationLanguages, translationSupported } from '../public/languages.js';
 /** @type {Readonly<import('./contracts.js').Settings>} */
 export const defaults = Object.freeze({
   style: "spotlight", language: "zh", display: "both", fontSize: 42,
@@ -9,10 +10,10 @@ export const defaults = Object.freeze({
   voiceEnabled: false, voiceViewerEnabled: false, rewardMappings: {}, setupComplete: false
 });
 const choices = {
-  style: ["spotlight", "paper", "comic"], language: ["zh", "es", "ja"],
+  style: ["spotlight", "paper", "comic"], language: translationLanguages.map(item => item.code),
   display: ["both", "source", "translation"], position: ["bottom", "center", "top"],
   format: ["landscape", "portrait"], preset: ['captions', 'context', 'describe', 'chorus', 'chaos'],
-  secondaryLanguage: ['en', 'zh', 'es', 'ja'], secondaryPosition: ['above', 'below'],
+  secondaryLanguage: captionLanguages.map(item => item.code), secondaryPosition: ['above', 'below'],
   chaosPlacement: ['alongside', 'replace'], chorusTone: ['literal', 'playful']
 };
 const numbers = { fontSize: [28, 64], hold: [3, 10], backplate: [45, 100], cooldown: [5, 60] };
@@ -47,8 +48,8 @@ export function parseCommand(text, isModerator = false) {
   if (isModerator && /^!mode\s+reset\s*$/i.test(text.trim())) return { kind: 'reset', value: '' };
   const match = /^!style\s+(spotlight|paper|comic)\s*$/i.exec(text.trim());
   if (match) return { kind: "style", value: match[1].toLowerCase() };
-  const language = /^!captions\s+(zh|es|ja)\s*$/i.exec(text.trim());
-  if (language && isModerator) return { kind: "language", value: language[1].toLowerCase() };
+  const language = /^!captions\s+([a-z-]+)\s*$/i.exec(text.trim());
+  if (language && isModerator && translationSupported(language[1].toLowerCase())) return { kind: "language", value: language[1].toLowerCase() };
   return null;
 }
 export function acceptCaption(state, input) {

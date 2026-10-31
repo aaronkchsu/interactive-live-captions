@@ -28,3 +28,16 @@ test('dub captions are labeled and restore speech after the effect without chang
   renderCaption(target, state); assert.equal(target.querySelector('.caption-block'), null); assert.equal(target.querySelector('.dub-caption').textContent, '大家好'); assert.match(target.querySelector('.dub-badge').textContent, /AI DUB/);
   state.voice.effect = null; renderCaption(target, state); assert.equal(target.querySelector('.caption-source').textContent, 'Hello everyone'); assert.equal(caption.source, 'Hello everyone');
 });
+
+test('Arabic and Hebrew preserve RTL text while English speech and secondary labels remain LTR', t => {
+  const previous = globalThis.document; globalThis.document = { createElement: () => new Element(), createTextNode: text => ({ textContent: text }) };
+  t.after(() => { if (previous === undefined) delete globalThis.document; else globalThis.document = previous; });
+  const target = new Element();
+  for (const [language, text] of [['ar', 'مرحبًا بالجميع'], ['he', 'שלום לכולם'], ['fr', 'Bonjour à tous']]) {
+    renderCaption(target, { sessionId: 'rtl', settings: { ...defaults, language, preset: 'context' }, caption: { id: 'a', source: 'Hello everyone', translation: text }, secondary: { kind: 'chorus', language, text, origin: 'live' } });
+    const translation = target.querySelector('.caption-translation'), cue = target.querySelector('.secondary-caption');
+    assert.equal(translation.lang, language); assert.equal(translation.dir, language === 'fr' ? 'ltr' : 'rtl');
+    assert.equal(cue.childNodes[0].dir, 'ltr'); assert.equal(cue.childNodes[1].dir, translation.dir);
+    assert.equal(target.querySelector('.caption-source').lang, 'en');
+  }
+});

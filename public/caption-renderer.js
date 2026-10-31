@@ -1,4 +1,4 @@
-const languageCodes = { en: 'en', zh: 'zh-Hans', es: 'es', ja: 'ja' };
+import { captionLanguage } from './languages.js';
 export function clearCaption(target) { target.replaceChildren(); delete target.dataset.renderKey; }
 export function renderCaption(target, state) {
   const settings = state.settings;
@@ -31,7 +31,7 @@ export function renderCaption(target, state) {
         block.append(original);
       }
       if (settings.display !== 'source' && translation) {
-        const translated = document.createElement('div'); translated.className = 'caption-translation'; translated.lang = languageCodes[settings.language]; translated.textContent = translation;
+        const translated = document.createElement('div'); translated.className = 'caption-translation'; translated.lang = captionLanguage(settings.language)?.tag || 'en'; translated.dir = captionLanguage(settings.language)?.dir || 'ltr'; translated.textContent = translation;
         if (settings.display === 'translation') block.classList.add('translation-only'); block.append(translated);
       }
       stack.append(block);
@@ -41,9 +41,9 @@ export function renderCaption(target, state) {
     }
   }
   if (!dubbing && state.secondary && settings.preset !== 'captions') {
-    const cue = document.createElement('div'); cue.className = `secondary-caption ${state.secondary.kind}`; cue.lang = languageCodes[state.secondary.language] || 'en';
-    const label = document.createElement('span'); label.className = 'secondary-label'; label.textContent = `${state.secondary.origin === 'demo' ? 'SAMPLE · ' : ''}${({ observation: 'STREAMER', chorus: 'CHAT CHORUS', fiction: 'AI COMEDY' })[state.secondary.kind]}`;
-    const text = document.createElement('span'); text.textContent = state.secondary.text; cue.append(label, text); stack.append(cue);
+    const cue = document.createElement('div'); cue.className = `secondary-caption ${state.secondary.kind}`; cue.lang = captionLanguage(state.secondary.language)?.tag || 'en';
+    const label = document.createElement('span'); label.className = 'secondary-label'; label.lang = 'en'; label.dir = 'ltr'; label.textContent = `${state.secondary.origin === 'demo' ? 'SAMPLE · ' : ''}${({ observation: 'STREAMER', chorus: 'CHAT CHORUS', fiction: 'AI COMEDY' })[state.secondary.kind]}`;
+    const text = document.createElement('span'); text.lang = cue.lang; text.dir = captionLanguage(state.secondary.language)?.dir || 'ltr'; text.textContent = state.secondary.text; cue.append(label, text); stack.append(cue);
   }
   target.append(stack);
 }

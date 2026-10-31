@@ -44,3 +44,5 @@ The `.openai/hosting.json` project is for an owner-private Sites review deployme
 - No analytics, secret storage, microphone access, or Twitch authorization occurs on this marketing page. Google Fonts are loaded from Google's font service.
 
 Local screenshots and deployment archives live in ignored `artifacts/` and are not published.
+
+The live studio now has 20 caption languages (English source plus 19 translation targets). The expandable marketing list is generated from `../public/languages.js` by `npm run website:languages` at the repository root. `npm run website:check` verifies synchronization. The marketing playground intentionally keeps its three recorded translation examples; it never makes live paid translation requests.

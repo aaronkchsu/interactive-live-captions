@@ -1,3 +1,4 @@
+import { captionLanguages, translationLanguages, captionLanguage } from '/languages.js';
 import { renderCaption, clearCaption } from '/caption-renderer.js';
 import { createCapture } from '/microphone.js';
 import { createBroadcastAudio } from '/broadcast-audio.js';
@@ -13,6 +14,9 @@ async function api(path, data = {}, signal) {
   const result = await response.json(); if (!response.ok) throw new Error(result.error || 'This action could not be completed.'); return result;
 }
 async function settings(patch) { try { render(await api('settings', patch)); } catch (error) { toast(error.message); } }
+for (const [id, items] of [['language', translationLanguages], ['secondary-language', captionLanguages]]) {
+  $(`#${id}`).replaceChildren(...items.map(item => { const option = document.createElement('option'); option.value = item.code; option.textContent = `${item.name} · ${item.native}`; return option; }));
+}
 const voiceOutput = createBroadcastAudio({ send: api, notify: toast });
 function stopCapture() { voiceOutput.stop(); startEpoch++; capture?.stop(); capture = null; captureContext = null; pendingStart = false; }
 function report(kind, status, error = '') {
@@ -43,9 +47,10 @@ function render(next) {
   $('#audio-label').textContent = live ? `${state.microphone.provider === 'openai' ? 'OpenAI' : 'Browser'} speech · English` : 'Sample captions · no audio';
   $('#source-transcript').textContent = state.draft?.source || state.caption?.source || 'Your next words will appear here.';
   $('#translation-transcript').textContent = state.caption?.translation || (live && !state.available.openai ? 'Connect OpenAI for live translation.' : '');
-  $('#translation-transcript').lang = { zh: 'zh-Hans', es: 'es', ja: 'ja' }[state.settings.language];
-  $('#language-badge').textContent = { zh: '中文', es: 'ES', ja: '日本語' }[state.settings.language]; $('#caption-origin').textContent = live ? 'LIVE SPEECH' : 'SAMPLE';
-  $('#translation-status').textContent = !live ? 'Pretranslated demo phrases' : state.translation.error || (state.translation.latency ? `Last translation: ${(state.translation.latency / 1000).toFixed(1)}s after request` : 'Translation follows completed phrases');
+  $('#translation-transcript').lang = captionLanguage(state.settings.language)?.tag || 'en';
+  $('#translation-transcript').dir = captionLanguage(state.settings.language)?.dir || 'ltr';
+  $('#language-badge').textContent = captionLanguage(state.settings.language)?.native || state.settings.language; $('#caption-origin').textContent = live ? 'LIVE SPEECH' : 'SAMPLE';
+  $('#translation-status').textContent = !live ? (state.caption?.translation ? 'Pretranslated demo phrases' : 'No recorded sample for this language. Start a live session for translation.') : state.translation.error || (state.translation.latency ? `Last translation: ${(state.translation.latency / 1000).toFixed(1)}s after request` : 'Translation follows completed phrases');
   for (const [id, key] of Object.entries(bindings)) {
     const element = $(`#${id}`); inputValue(element, state.settings[key]);
     if (element.type === 'range') element.style.setProperty('--range-fill', `${100 * (Number(element.value) - Number(element.min)) / (Number(element.max) - Number(element.min))}%`);
@@ -54,7 +59,7 @@ function render(next) {
   for (const field of ['style', 'format', 'display', 'position']) $$(`button[data-${field}]`).forEach(button => { const active = button.dataset[field] === state.settings[field]; button.classList.toggle(field === 'style' ? 'selected' : 'active', active); button.setAttribute('aria-pressed', String(active)); });
   $('#sidebar-connection').textContent = state.twitch.status === 'connected' ? `@${state.twitch.channel} connected` : 'Twitch not connected';
   $('#mode-description').textContent = descriptions[state.settings.preset];
-  $('#secondary-preview-text').textContent = state.secondary?.text || (live ? 'Waiting for a meaningful moment.' : 'Select a mode to preview its secondary line.');
+  $('#secondary-preview-text').textContent = state.secondary?.text || (live ? 'Waiting for a meaningful moment.' : 'Recorded secondary samples: English, Chinese, Spanish, Japanese. Other languages need a live session.');
   $('#active-effect').hidden = !state.effect;
   $('#effect-countdown').textContent = state.effect ? `${state.effect.value} · ${Math.max(0, Math.ceil((state.effect.until - Date.now()) / 1000))}s remaining` : '';
   $('#audience-footnote').textContent = `Commands + rewards · ${state.settings.cooldown}s cooldown · 20s effects`;
