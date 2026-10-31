@@ -48,3 +48,11 @@ Local screenshots and deployment archives live in ignored `artifacts/` and are n
 The live studio now has 21 caption languages (English source plus 20 translation targets). The expandable marketing list is generated from `../public/languages.js` by `npm run website:languages` at the repository root. `npm run website:check` verifies synchronization. The marketing playground intentionally keeps its three recorded translation examples; it never makes live paid translation requests.
 
 Research notes live at `dist/research.html`, linked from the landing-page navigation. The static page preserves the studio’s original study links and limitations. It does not load the playground script or make API requests.
+
+## Yellow/pink design exploration (local preview)
+
+The original cream/gold design is preserved at tag `auramax-editorial-before-color` (commit `d87a4f3`). The separate `design/yellow-pink-preview` branch adds `dist/signal.css` to the landing page; all visible copy and demo behavior remain unchanged. Yellow highlights streamer speech and pink highlights community/Chaos commentary. Research and the studio retain their current styles pending a design decision. This exploration has not been deployed.
+
+For side-by-side review, the ignored `artifacts/brand-review/` directory contains `original/` and `yellow/` static snapshots. Serve that directory on port 4320 to compare `/original/` and `/yellow/`. Refresh the yellow snapshot after further changes. The Git tag is the durable original; the snapshots are only review aids.
+
+Validation: website checks passed; extracted visible HTML text matches the original exactly. Browser checks at 1280px and 390px showed no horizontal overflow. Translation, caption hiding/restoration, and mode color changes were verified. No JavaScript behavior was changed.
