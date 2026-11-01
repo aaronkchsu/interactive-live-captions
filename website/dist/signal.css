@@ -81,7 +81,9 @@ h2 em{font-size:1em;color:inherit}
 .audience{padding-top:60px;padding-bottom:30px}
 .section-label{margin-bottom:36px;grid-template-columns:1fr 2fr;gap:32px}
 .section-label h2{font-size:clamp(32px,4.2vw,56px)}
-.audience h2 em{color:var(--ink);background:var(--yellow);box-decoration-break:clone;-webkit-box-decoration-break:clone;padding:0 .1em}
+.audience h2,.signup h2{display:grid;justify-items:start;gap:.16em;line-height:1.08}
+.audience h2 br,.signup h2 br{display:none}
+.audience h2 em,.signup h2 em{display:block;width:fit-content;max-width:100%;line-height:1.15;color:var(--ink);background:var(--yellow);padding:.02em .1em .08em}
 .audience-row{grid-template-columns:32px 1.2fr 1.3fr 44px;gap:24px;padding-block:26px}
 .audience-row h3{font-weight:600;font-size:clamp(25px,2.7vw,36px);line-height:1.15;letter-spacing:-.055em}
 .row-number{color:var(--muted);font-size:12px}
@@ -90,7 +92,6 @@ h2 em{font-size:1em;color:inherit}
 .audience-row button[data-try='chorus']:hover{background:var(--pink);border-color:var(--pink)}
 .signup{padding-top:48px;padding-bottom:64px}
 .signup h2{font-size:clamp(70px,9vw,116px);font-weight:700;margin-top:0}
-.signup h2 em{color:var(--ink);background:var(--yellow);padding:0 .1em}
 .signup-form select{border-color:#969b99;border-radius:3px;font-size:14px}
 .signup .button:hover{color:var(--ink);background:var(--yellow);border-color:var(--ink)}
 .footer .brand span{color:var(--ink);background:var(--yellow);padding-inline:2px}
