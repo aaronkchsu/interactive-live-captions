@@ -1,6 +1,8 @@
 # AuraMax Captions — submission draft
 
-Status: overview saved to Devpost; story and judge answers below are working drafts. Demo video, thumbnail, repository access, and final eligibility answers remain outstanding. Do not treat this file as a completed submission.
+Status: overview, story, gallery, thumbnail, video, and judge answers saved to Devpost on November 2, 2026. The repository is public. Final submission is pending confirmation of the required team agreement to the Official Rules and Devpost Terms of Service. This is not yet a completed submission.
+
+Demo video: https://youtu.be/TVLOwP1WWCE (2:51).
 
 ## Elevator pitch
 
@@ -8,51 +10,57 @@ Captivate your viewers with interactive live captions and subtitles. Let chat ch
 
 ## Project story
 
-### Inspiration
+## Expand your community with AuraMax Captions
 
-A viewer opens a stream on their phone without sound. Another speaks a different language. Both can see the streamer react, but miss what made the moment funny.
+Part of the inspiration came from spending a lot of time in multilingual Twitch chats across different time zones. I wanted a way to bring those communities together, so more people could understand the moment and join the conversation even when they spoke different languages.
 
-AuraMax started with captions that help those viewers follow along. Then we asked: what if the community could also participate through the captions? A chat command could change their look, turn on playful commentary, or temporarily switch the streamer's spoken output to another language.
+I was also noticing captions in more and more videos, especially in feeds people scroll through with the sound off. That made me want the same option for live streams. Someone watching on mute should still be able to follow what is happening and decide whether they want to stay.
 
-### What it does
+AuraMax Captions brings those ideas together: live captions and translation that help more people follow the stream, with interactive commentary and viewer controls that let the community take part.
 
-AuraMax is a local caption studio connected to Twitch and OBS.
+## How AuraMax Captions helps a channel reach more people
 
-- **Subtitles:** transcribe English speech and display captions in a catalog of 21 languages, including Slovak and Turkish. Add a second track for bilingual captions.
-- **Commentary:** use selected microphone, camera, and chat inputs to describe or react to the stream. Choose factual, playful, cheeky, or roast commentary. Generated commentary stays separate from the actual transcript.
-- **Community controls:** let viewers trigger creator-approved changes through chat commands and mapped Channel Points rewards. Effects can change language, style, content, or commentary tone. Creators choose duration and permissions.
-- **Voice translation, beta:** translate spoken output into a selected language through a separate OBS audio source. Streamers can leave it on until they stop it; viewer activations are timed. It uses AI-translated speech, not a guaranteed clone of the streamer's voice.
-- **Stream controls:** customize fonts, colors, placement, and backgrounds. Freeze the current captions, hide them immediately, or resume current output.
+**Make your stream understandable without audio.** Someone watching on a train or in a quiet room can read what you are saying. Captions also help viewers who are deaf or hard of hearing follow speech. The goal is to give a new viewer enough context to stay and join the conversation.
 
-Captions are added to the broadcast through an OBS Browser Source. All viewers see the same output. The studio runs locally with the streamer's own OpenAI key; the public website provides a scripted interactive preview.
+**Welcome audiences who speak another language.** Speak English and show translated captions in Chinese, French, Korean, Slovak, Turkish, and more. AuraMax Captions offers 21 caption languages: English plus 20 translation targets. An optional second track lets you keep English on screen alongside a translation, so your existing community and a new language audience can follow the same moment.
 
-### How we built it with Codex
+**Let viewers hear you in another language.** Live voice translation, currently in beta, sends translated speech to the whole broadcast through OBS. Choose from 13 spoken output languages. Keep it on until you stop it, or let viewers trigger a temporary switch with a duration you choose. This opens another way to serve an international audience without requiring the creator to speak every language. Translation has a delay, and voice similarity and translation quality vary.
 
-We used OpenAI Codex throughout design, implementation, and testing. We brought stream-specific problems and screenshots into the conversation, then used Codex to turn them into working changes: the first caption dashboard, Twitch authorization, OBS output, translation, and community controls.
+**Give chat a role in the show.** Viewers can use approved chat commands and Channel Points rewards to change caption styles, switch content modes, or turn up the commentary tone. Chat Chorus brings collective reactions into a single line, helping people follow what the community is reacting to without reading every message. Collective claims require multiple contributing viewers, rather than one person spamming.
 
-The biggest design change was replacing a growing collection of modes with two configurable tracks. Either track can contain subtitles or commentary, with independent language and appearance. Codex helped refactor the event pipeline so subtitle-only sessions do not run camera analysis or chat commentary.
+These features address barriers to understanding and participation. Growing the channel is the ambition; we have not yet measured a retention or audience-growth lift.
 
-The application uses one Node.js 24 server, native JavaScript browser modules, HTML/CSS, and JSDoc type checking. OpenAI powers transcription, translation, observations, commentary, and translated speech. Twitch OAuth and EventSub connect the creator's channel to chat and reward events. OBS Browser Sources deliver text and audio to the broadcast.
+## Captions that fit the creator
 
-### Challenges and what we learned
+Streamers choose between two main uses: **Subtitles** for their spoken words, or **Commentary** for observations and reactions. Commentary can use selected microphone, camera, and chat inputs, with tones ranging from factual to playful to roast. Generated commentary is kept separate from the actual spoken transcript.
 
-Live output has to handle late results. A translation arriving after the streamer changes language must not replace newer captions. We track source revisions, bound request queues, and discard obsolete work.
+Both use the same appearance controls: fonts, colors, emphasis, backgrounds, size, and placement. A second track is an advanced option with its own language and design. A streamer could show English subtitles with Chinese subtitles, or pair subtitles with Korean commentary.
 
-Voice translation introduced another problem: cutting the original microphone as soon as an effect starts creates silence while translated audio prepares. We keep original audio flowing until translated speech arrives, then switch the routed output. Translation still has model latency; warming the connection does not eliminate that delay.
+Creators decide which viewer add-ons are allowed and how long they last. They can freeze the latest captions, hide the output immediately, and resume when ready. The community can participate within boundaries the creator sets.
 
-Community commentary needs evidence. One viewer repeating a message should not become “chat thinks…” Collective claims require multiple contributors, and chat inputs are bounded and deduplicated.
+## How we built it with Codex
 
-We also learned to separate the caption transcript from generated commentary. That distinction matters in the interface, the overlay, and exported transcripts.
+We used OpenAI Codex throughout product design, implementation, and testing. We brought real streamer workflows, screenshots, and feedback into the conversation, then iterated on the dashboard, Twitch connection, OBS output, translations, and viewer controls.
 
-### What we verified
+A major refactor replaced a crowded set of modes with two independent subtitle/commentary tracks. Codex helped separate capture, processing, and display so subtitle-only sessions use the microphone without running unnecessary camera or chat analysis.
 
-The current local build passes 103 automated tests, type checking, and website checks. Tests cover reordered speech, stale translations, overlapping effects, reconnects, isolated streamer contexts, and webcam preview lifecycle. A simulated one-hour run checks bounded queues and memory.
+The app uses a Node.js 24 server and native browser JavaScript. Twitch OAuth and EventSub connect chat and Channel Points events. OpenAI APIs power transcription, translation, observations, commentary, and translated speech. OBS Browser Sources deliver captions and audio to the broadcast.
 
-We also tested real provider translations, a live Twitch style command, and microphone-to-Chinese voice output recorded through OBS. These checks are documented separately from synthetic fixtures. Fluent-speaker quality review, a full real-stream soak, and broader live camera/community testing remain outstanding.
+## Challenges and progress
 
-### What's next
+Live captions must survive late translations, language changes, reconnects, and overlapping viewer effects. We added source revisions, bounded queues, and tests so old results cannot replace newer output.
 
-Optional captions through Twitch's native CC controls and a viewer-side Twitch Extension could let each viewer choose visibility and language. These are planned, not shipped. Hosted onboarding with Twitch sign-in, encrypted credentials, and account-level controls is also future work; the current studio is local.
+Voice translation also exposed an awkward silence during startup. We now keep the original microphone audible until translated speech arrives, then switch the routed output. This improves the transition while preserving the reality that translation takes time.
+
+The build passes 103 automated tests. We have also tested real translations, a live Twitch style command, a real webcam preview, and English microphone input translated into Chinese audio recorded through OBS. Longer real-stream testing and fluent-speaker review remain next steps.
+
+## Where this goes next
+
+The current release is a local studio using the creator's own paid OpenAI API key. Captions and translated audio are broadcast-wide. The website at [auramaxcap.com](https://auramaxcap.com) shows recorded demonstrations and provides early-access signup.
+
+Next, we want individual viewers to choose their own experience: optional captions through Twitch's CC controls and a Twitch Extension with personal visibility and language settings. Hosted onboarding with Twitch sign-in would make getting started easier. These are planned features, not part of the current build.
+
+The vision is a stream that more people can understand, in more languages and more viewing situations, with more ways to take part.
 
 ## Judge-only: main technology requirement
 
@@ -82,11 +90,10 @@ For example, a creator can show English speech with Chinese captions, let chat t
 
 ## Submission checklist
 
-- Saved overview: AuraMax Captions and elevator pitch.
-- Review and save project story, Built with tags, and website/code links.
-- Record and upload a maximum three-minute YouTube demo. Use public visibility to satisfy the stricter wording on the event overview (the edit form also mentions unlisted).
-- Add a project thumbnail and selected screenshots.
-- Push current local commit and confirm judges can access the repository. Private repositories must be shared with testing@devpost.com, per the submission form.
-- Confirm the primary Codex session ID. This browser session reports 01a176dc-1f6e-7cc1-b93f-94b2c1512dcd; verify that it is the main build thread before submitting.
-- User supplies submitter type, residence, personal survey answers, and eligibility attestations.
-- Review final submission together before submitting.
+- Saved overview, story, Built with tags, website and repository links.
+- Saved YouTube demo: https://youtu.be/TVLOwP1WWCE. Verified video loads and runs 2:51.
+- Saved subtitle-focused thumbnail and five gallery images.
+- Public repository: https://github.com/aaronkchsu/interactive-live-captions.
+- Verified primary Codex session ID: 01a176dc-1f6e-7cc1-b93f-94b2c1512dcd, the main "TwitchCon — Interactive Live Captions" build chat. Saved in Devpost.
+- Saved user-selected submitter type (Team of Individuals), residence (United States), and survey answers (Significantly; Likely).
+- Final team agreement and Submit project action remain pending. Do not claim submission until Devpost confirms it.
