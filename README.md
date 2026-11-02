@@ -2,6 +2,8 @@
 
 A local Twitch studio with independent subtitle and commentary tracks, live translation, and viewer-controlled add-ons. One Node 24 server and native browser modules; no runtime dependencies or frontend build step.
 
+Built with [OpenAI Codex](https://openai.com/codex/), which wrote the code across design, implementation, and testing. MIT licensed; see [LICENSE](LICENSE).
+
 ## One repository, two experiences
 
 - **Live studio:** `server.mjs`, `src/`, and `public/` — local captions, Twitch controls, OBS overlay, and translated broadcast audio.
