@@ -1,79 +1,68 @@
 import { signup } from './signup-config.js';
 const $ = (selector) => document.querySelector(selector);
-const modes = {
-  captions: 'Every word. Even on mute.',
-  translate: 'Your words. Another language.',
-  chorus: 'A whole chat. One shared reaction.',
-  chaos: 'Let chat get creative.'
+const clips = {
+  captions: { file: 'subtitles', label: 'Subtitles', description: 'Your words, on screen.', note: 'Recorded footage from our project video. Subtitles styled for the demo.' },
+  commentary: { file: 'commentary', label: 'Commentary', description: 'Commentary for what happens on camera.', note: 'Recorded footage with illustrated commentary from our project video.' },
+  translate: { file: 'translation', label: 'Translation', description: 'The same moment, in different languages.', note: 'Edited translation demonstration. Caption changes and chat are illustrated.' },
+  voice: { file: 'voice', label: 'Voice translation', description: 'English in. Chinese audio out. Turn sound on to listen.', note: 'Recorded live through OBS. Voice translation is in beta and has a delay.' }
 };
-const script = [
-  { moment: 'Just chatting', en: 'Wait, what was I saying?', accent: 'what was I saying?', zh: '等等，我刚才说到哪儿了？', es: 'Espera, ¿qué estaba diciendo?', ja: '待って、何の話をしてたっけ？', chorus: 'Chat is still waiting for the plot.', chaos: 'Streamer has been talking about nothing for the past 30 minutes.' },
-  { moment: 'Snack break', en: 'One sec. Banana break.', accent: 'Banana break.', zh: '等一下，吃根香蕉休息一下。', es: 'Un segundo. Pausa para comer un plátano.', ja: 'ちょっと待って。バナナ休憩。', chorus: 'Chat came for gameplay. Stayed for the banana lore.', chaos: 'Viewers are just watching a streamer eat a banana.' },
-  { moment: 'Minecraft', en: 'Chat, it is just a door.', accent: 'just a door.', zh: '各位，这只是一扇门。', es: 'Chat, es solo una puerta.', ja: 'みんな、ただのドアだよ。', chorus: 'Chat has questions about this Minecraft build.', chaos: 'Streamer is being a little too scandalous about a Minecraft door.' }
-];
-let mode = 'chaos', line = 0, captionsHidden = false, paused = matchMedia('(prefers-reduced-motion: reduce)').matches;
-function render() {
-  const item = script[line];
-  $('#demo-moment').value = String(line);
-  const speech = $('#speech-caption');
-  speech.replaceChildren();
-  const [before, after] = item.en.split(item.accent);
-  const emphasis = document.createElement('em'); emphasis.textContent = item.accent;
-  speech.append(before, emphasis, after || '');
-  const secondary = $('#secondary-caption');
-  secondary.hidden = mode === 'captions';
-  secondary.textContent = mode === 'translate' ? item[$('#demo-language').value] : item[mode] || '';
-  secondary.lang = mode === 'translate' ? $('#demo-language').value : 'en';
-  $('.caption-stack').hidden = captionsHidden;
-  $('#empty-caption').hidden = !captionsHidden;
-  $('#scene').dataset.mode = mode;
-  $('#mode-description').textContent = modes[mode];
-  document.querySelectorAll('[data-mode]').forEach(button => {
-    if (button.tagName !== 'BUTTON') return;
-    const selected = button.dataset.mode === mode;
-    button.classList.toggle('selected', selected); button.setAttribute('aria-pressed', String(selected));
+const video = $('#demo-video');
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let selected = 'captions';
+let wantsPlayback = !reducedMotion.matches;
+let visible = false;
+function playback() {
+  if (wantsPlayback && visible && !document.hidden) {
+    video.play().catch(() => { /* Native Play remains available if autoplay is blocked. */ });
+  } else video.pause();
+}
+function syncControls() {
+  $('#pause').textContent = video.paused ? 'Play video' : 'Pause video';
+  $('#pause').setAttribute('aria-pressed', String(!video.paused));
+  $('#sound').textContent = video.muted ? 'Sound on' : 'Mute';
+  $('#sound').setAttribute('aria-pressed', String(!video.muted));
+}
+function selectClip(key) {
+  if (!Object.hasOwn(clips, key)) return;
+  const clip = clips[key];
+  selected = key;
+  video.poster = `assets/video/${clip.file}.jpg`;
+  video.src = `assets/video/${clip.file}.mp4`;
+  video.setAttribute('aria-label', `AuraMax Captions ${clip.label.toLowerCase()} demonstration`);
+  $('#mode-description').textContent = clip.description;
+  $('#demo-note').textContent = clip.note;
+  $('#video-error').hidden = true;
+  $('#video-fallback').href = video.src;
+  document.querySelectorAll('[data-clip]').forEach(button => {
+    const active = button.dataset.clip === key;
+    button.classList.toggle('selected', active);
+    button.setAttribute('aria-pressed', String(active));
   });
+  playback();
 }
-function setMode(next) { mode = next; render(); }
-$('#caption-toggle').addEventListener('click', () => {
-  captionsHidden = !captionsHidden;
-  $('.caption-stack').hidden = captionsHidden;
-  $('#caption-toggle').setAttribute('aria-pressed', String(captionsHidden));
-  $('#caption-toggle').textContent = captionsHidden ? 'Show captions ↔' : 'Hide captions ↔';
-  render();
+$('#pause').addEventListener('click', () => {
+  wantsPlayback = video.paused;
+  if (wantsPlayback) video.play().catch(syncControls);
+  else video.pause();
 });
-document.querySelectorAll('button[data-mode]').forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
+$('#sound').addEventListener('click', () => { video.muted = !video.muted; });
+video.addEventListener('play', () => { wantsPlayback = true; syncControls(); });
+video.addEventListener('pause', () => {
+  if (visible && !document.hidden && !video.ended && video.readyState >= 2) wantsPlayback = false;
+  syncControls();
+});
+video.addEventListener('volumechange', syncControls);
+video.addEventListener('error', () => { $('#video-error').hidden = false; syncControls(); });
+document.querySelectorAll('[data-clip]').forEach(button => button.addEventListener('click', () => selectClip(button.dataset.clip)));
 document.querySelectorAll('[data-try]').forEach(button => button.addEventListener('click', () => {
-  captionsHidden = false; $('#caption-toggle').setAttribute('aria-pressed', 'false'); $('#caption-toggle').textContent = 'Hide captions ↔'; setMode(button.dataset.try); $('#playground').scrollIntoView({block:'center'});
-  $(`button[data-mode="${mode}"]`).focus({preventScroll:true});
+  selectClip(button.dataset.try);
+  $('#playground').scrollIntoView({ block: 'center', behavior: reducedMotion.matches ? 'instant' : 'smooth' });
+  $(`[data-clip="${selected}"]`).focus({ preventScroll: true });
 }));
-$('#demo-moment').addEventListener('change', () => { line = Number($('#demo-moment').value); render(); });
-$('#demo-language').addEventListener('change', () => setMode('translate'));
-function renderPause() {
-  $('#pause').setAttribute('aria-pressed', String(paused));
-  $('#pause').textContent = paused ? 'Play demo' : 'Pause demo';
-  $('#scene').classList.toggle('paused', paused);
-}
-$('#pause').addEventListener('click', () => { paused = !paused; renderPause(); });
-setInterval(() => { if (!paused && !document.hidden) { line = (line + 1) % script.length; render(); } }, 7000);
-$('#style-button').addEventListener('click', () => {
-  const classic = $('#scene').classList.toggle('classic');
-  $('#style-button').textContent = classic ? 'Style: classic ↻' : 'Style: bold ↻';
-  $('#style-button').setAttribute('aria-pressed', String(classic));
-});
-$('#chat-form').addEventListener('submit', event => {
-  event.preventDefault();
-  $('#chat-feedback').hidden = false;
-  const input = $('#chat-command');
-  const command = input.value.trim().toLowerCase();
-  const requested = command.replace(/^!mode\s+/, '');
-  const aliases = { captions:'captions', translate:'translate', chorus:'chorus', chaos:'chaos' };
-  if (command.startsWith('!mode ') && Object.hasOwn(aliases, requested)) {
-    setMode(aliases[requested]); $('#chat-feedback').textContent = `Demo chat → ${requested} mode. Real chat effects are streamer-controlled.`; input.value = '';
-  } else {
-    $('#chat-feedback').textContent = 'Try !mode captions, !mode translate, !mode chorus, or !mode chaos.';
-  }
-});
+new IntersectionObserver(entries => { visible = entries[0].isIntersecting; playback(); }, { threshold: 0.15 }).observe(video);
+document.addEventListener('visibilitychange', playback);
+reducedMotion.addEventListener('change', () => { if (reducedMotion.matches) { wantsPlayback = false; playback(); } });
+syncControls();
 function connectSignup(interest = 'Captions') {
   if (!signup.formUrl) return;
   const url = new URL(signup.formUrl);
@@ -85,4 +74,4 @@ function connectSignup(interest = 'Captions') {
   $('#signup-status').textContent = 'Free signup · Google Form · Private responses';
 }
 $('#interest').addEventListener('change', () => connectSignup($('#interest').value));
-render(); renderPause(); connectSignup();
+connectSignup();

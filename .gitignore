@@ -22,3 +22,6 @@ exports/
 *.mp3
 *.zip
 *.bundle
+
+# Approved, compressed public website demo clips
+!website/dist/assets/video/*.mp4

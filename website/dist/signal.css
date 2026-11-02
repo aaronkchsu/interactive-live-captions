@@ -114,3 +114,14 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,su
 .voice-beta .button:hover{background:var(--pink);border-color:var(--pink)}
 .voice-beta small{display:block;margin-top:16px;font-size:12px;line-height:1.6;color:#b7bdc1;max-width:480px}
 @media(max-width:680px){.voice-beta{grid-template-columns:1fr;gap:24px;padding-block:36px}.voice-beta-label{margin-bottom:16px}.voice-beta-copy>p{font-size:17px}}
+
+/* Prerecorded product footage replaces the stock-photo simulator. */
+.recorded-stage{background:#0b0c0d;aspect-ratio:16/9;overflow:hidden}
+.recorded-stage video{display:block;width:100%;height:100%;object-fit:contain}
+.recorded-demo .demo-toolbar{flex-wrap:wrap;letter-spacing:0}
+.recorded-demo .demo-toolbar>span{margin-right:auto}
+.recorded-demo .demo-toolbar #pause{margin-left:0}
+.recorded-demo .demo-toolbar button{font-size:13px;min-height:40px;white-space:nowrap}
+.recorded-description{padding:18px 0 3px;font-size:16px}
+#video-error{padding:12px 0;color:var(--yellow);font-size:14px}
+@media(max-width:680px){.recorded-demo .demo-toolbar{gap:8px;padding:8px 12px}.recorded-demo .demo-toolbar>span{width:100%;font-size:10px}.recorded-demo .demo-toolbar button{padding:4px 8px}.recorded-demo .mode-tabs{grid-template-columns:1fr 1fr}.recorded-description{font-size:14px}}
