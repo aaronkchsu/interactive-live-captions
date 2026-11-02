@@ -164,7 +164,7 @@ $('#start-microphone').addEventListener('click', async () => {
     const next = await api('session', { mode: 'live', provider });
     if (epoch !== startEpoch) return;
     captureContext = { streamerId: next.streamerId, sessionId: next.sessionId, captureId: next.captureId }; render(next);
-    capture = createCapture({ context: captureContext, provider, getSettings: () => state.settings, send: api, report, onMicrophone: stream => stream ? voiceOutput.attach(stream, captureContext) : voiceOutput.stop(), onCamera: stream => setup.showCamera(stream) });
+    capture = createCapture({ context: captureContext, provider, getSettings: () => state.settings, send: api, report, onMicrophone: stream => stream ? voiceOutput.attach(stream, captureContext) : voiceOutput.stop(), onCamera: stream => { setup.showCamera(stream); preview.showCamera(stream); } });
     await capture.ready;
   } catch (error) { if (epoch === startEpoch) { toast(captureFailure(error).message); stopCapture(); } }
   finally { if (epoch === startEpoch) { pendingStart = false; if (state) render(state); } }

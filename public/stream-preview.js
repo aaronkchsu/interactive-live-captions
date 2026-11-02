@@ -1,9 +1,36 @@
+import { webcamPreview } from './webcam-preview.js';
+import { captureFailure } from './capture-errors.js';
 // Studio-only background. Never forwarded to OBS or to an AI processor.
 export function streamPreview({ api }) {
   const stage = document.querySelector('#preview-stage');
   const image = document.querySelector('#stream-snapshot');
   const status = document.querySelector('#preview-source-status');
+  const video = document.querySelector('#preview-webcam');
+  const button = document.querySelector('#preview-webcam-toggle');
+  let cameraEnabled = false;
   let epoch = 0, timer, request, busy = false, channel = '';
+  const camera = webcamPreview({
+    getMedia: constraints => navigator.mediaDevices.getUserMedia(constraints),
+    changed({ enabled, pending, stream, error }) {
+      cameraEnabled = enabled; stop();
+      video.srcObject = stream || null; video.hidden = !stream;
+      button.setAttribute('aria-pressed', String(enabled));
+      button.textContent = enabled ? (pending ? 'Cancel webcam' : 'Hide webcam') : 'Show webcam';
+      if (enabled) {
+        stage.dataset.backdrop = 'webcam';
+        status.textContent = pending ? 'Waiting for camera permission…' : 'Live webcam · local preview only.';
+        if (stream) void video.play().catch(() => { if (video.srcObject === stream) camera.stop(new Error('Camera preview could not play. Choose Show webcam to retry.')); });
+      } else {
+        fallback(channel ? `Loading @${channel} preview…` : 'Demo background · connect Twitch to preview your channel.');
+        if (error) {
+          const issue = captureFailure(error);
+          status.textContent = error.name === 'Error' ? error.message : `${issue.title}. ${issue.message}`.replaceAll('Microphone', 'Camera').replaceAll('microphone', 'camera').replaceAll('audio device', 'camera');
+        }
+        else if (channel) void refresh();
+      }
+    },
+  });
+  button.addEventListener('click', () => camera.toggle());
   function stop() {
     epoch++; clearTimeout(timer); request?.abort(); busy = false;
     image.hidden = true; image.removeAttribute('src');
@@ -14,7 +41,7 @@ export function streamPreview({ api }) {
     status.textContent = message;
   }
   async function refresh() {
-    if (busy || !channel || document.hidden) return;
+    if (cameraEnabled || busy || !channel || document.hidden) return;
     clearTimeout(timer); const ticket = epoch; busy = true;
     try {
       request = new AbortController();
@@ -43,13 +70,15 @@ export function streamPreview({ api }) {
     }
   }
   function render(state) {
+    camera.setDevice(state.baseSettings?.cameraId || '');
     const next = state.twitch?.status === 'connected' ? state.twitch.channel : '';
     if (next === channel) return;
     stop(); channel = next || '';
+    if (cameraEnabled) return;
     fallback(channel ? `Loading @${channel} preview…` : 'Demo background · connect Twitch to preview your channel.');
     if (channel) void refresh();
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) void refresh(); });
-  window.addEventListener('pagehide', stop);
-  return { render };
+  window.addEventListener('pagehide', () => { camera.stop(); stop(); });
+  return { render, showCamera: stream => camera.setShared(stream) };
 }

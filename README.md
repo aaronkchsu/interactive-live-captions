@@ -32,6 +32,8 @@ The in-app browser is useful for design previews; Chrome/Edge are the supported 
 
 ## Stream preview background
 
+Choose **Show webcam** to display your selected camera behind captions in the studio. **Hide webcam** restores the automatic Twitch/demo background. This is a muted, local-only preview: it does not open the microphone, start AI analysis, or add webcam video to OBS. Select a different camera in Setup → Inputs. When camera analysis is already capturing, the preview reuses its stream. Closing the page releases preview-owned camera tracks.
+
 Stream Preview automatically follows the connected Twitch account. Live-channel snapshots refresh every 30 seconds while the studio tab is visible. Offline channels show their latest saved broadcast thumbnail when available; otherwise the demo background appears while the studio keeps checking. Disconnecting Twitch restores the demo background. Images are labeled and used for layout only, not synchronized video; they are never sent to OBS or AI.
 
 Backgrounds stay in the studio. They are not sent to AI, OBS, or the audience, and selecting one does not start capture. The channel name and public thumbnail metadata come from Twitch's [Get Streams](https://dev.twitch.tv/docs/api/reference/#get-streams) and [Get Videos](https://dev.twitch.tv/docs/api/reference/#get-videos) endpoints; credentials remain on the local server.

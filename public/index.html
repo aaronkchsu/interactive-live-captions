@@ -51,10 +51,11 @@
             <section class="preview-card">
               <div class="section-bar"><div><span class="section-label">STREAM PREVIEW</span></div><span class="status-pill" id="mode-pill"><i></i> Demo preview</span></div>
               <div id="microphone-recovery" class="microphone-recovery" hidden><div role="alert"><strong id="microphone-error-title"></strong><p id="microphone-error-help"></p></div><div class="connection-buttons"><button class="primary-btn" id="microphone-fix">Microphone settings</button><button class="secondary-btn" id="microphone-retry">Retry microphone</button></div><details><summary>Error details</summary><pre id="microphone-error-details"></pre></details></div>
-              <p class="preview-source-status" id="preview-source-status" role="status">Demo background · connect Twitch to preview your channel.</p>
+              <div class="preview-source-controls"><p class="preview-source-status" id="preview-source-status" role="status">Demo background · connect Twitch to preview your channel.</p><button class="secondary-btn" id="preview-webcam-toggle" aria-pressed="false">Show webcam</button></div>
               <div class="stage-wrapper"><div class="stream-stage" id="preview-stage">
                 <img class="scene-art" src="/scene.svg" alt="Illustrated mountain valley at sunset, used as a sample stream backdrop">
                 <img class="stream-snapshot" id="stream-snapshot" alt="" hidden>
+                <video class="stream-snapshot" id="preview-webcam" aria-label="Live webcam preview" muted playsinline hidden></video>
                 <div class="scene-vignette"></div>
                 <div class="scene-top"><span class="scene-world">NORTH OF<br><b>EVERYWHERE</b></span><span class="scene-demo">SAMPLE SCENE</span></div>
                 <div class="scene-coordinates">47° 36′ N<br>122° 20′ W</div>

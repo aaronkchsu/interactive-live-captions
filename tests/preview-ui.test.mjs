@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { streamPreview } from '../public/stream-preview.js';
 
 test('automatic preview follows connection changes and rejects stale account images', async t => {
-  const elements = Object.fromEntries(['#preview-stage', '#stream-snapshot', '#preview-source-status'].map(id => [id, { dataset: {}, hidden: true, removeAttribute() {} }]));
+  const elements = Object.fromEntries(['#preview-stage', '#stream-snapshot', '#preview-source-status', '#preview-webcam', '#preview-webcam-toggle'].map(id => [id, { dataset: {}, hidden: true, removeAttribute() {}, setAttribute() {}, addEventListener(name, fn) { this[name] = fn; }, async play() {} }]));
   const events = {}, calls = [];
   t.mock.method(globalThis, 'setTimeout', () => 1);
   t.mock.method(globalThis, 'clearTimeout', () => {});
@@ -33,4 +33,16 @@ test('automatic preview follows connection changes and rejects stale account ima
   assert.equal(elements['#stream-snapshot'].hidden, true);
   assert.equal(elements['#preview-stage'].dataset.backdrop, 'sample');
   assert.match(elements['#preview-source-status'].textContent, /connect Twitch/);
+  preview.render(connected('alice'));
+  const track = new EventTarget(); track.readyState = 'live';
+  const camera = { getVideoTracks: () => [track] };
+  preview.showCamera(camera); elements['#preview-webcam-toggle'].click();
+  assert.equal(calls[3].signal.aborted, true);
+  calls[3].resolve({status:'live',image:'https://static-cdn.jtvnw.net/alice.jpg'}); await flush();
+  assert.equal(elements['#preview-stage'].dataset.backdrop, 'webcam');
+  assert.equal(elements['#preview-webcam'].srcObject, camera);
+  assert.equal(elements['#stream-snapshot'].hidden, true);
+  elements['#preview-webcam-toggle'].click();
+  assert.equal(elements['#preview-webcam'].srcObject, null);
+  assert.equal(calls.length, 5);
 });
