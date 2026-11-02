@@ -3,7 +3,7 @@
 This repository owns the AuraMax live caption studio and its public landing page in website/. Do not edit sibling TwitchCon projects. Treat website/ as the canonical website source; the earlier standalone landing-page checkout is a historical backup. Deploy only website/dist/ to public static hosting.
 
 - Keep the application small: one Node server, native browser modules, CSS, and SVG. Node 24+; no runtime dependencies.
-- Fiction and commentary belong only in their labeled secondary tracks.
+- Subtitles and commentary can occupy either track. Label commentary and fiction; never represent either as the spoken transcript.
 - Preserve caption meaning. Visual presets never rewrite source speech or translation.
 - Keep demo fixtures unmistakably labeled. Never represent sample captions, chat, or events as live integrations.
 - Browser-source overlays are stream-wide. Per-viewer captions are a separate future product.

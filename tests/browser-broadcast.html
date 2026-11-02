@@ -1,40 +1,47 @@
-<!doctype html><html lang="en"><meta charset="utf-8"><title>Voice Box synthetic audio QA</title><style>body{font:16px system-ui;padding:24px}button{padding:12px;margin:6px}pre{white-space:pre-wrap}iframe{width:100%;height:180px}</style><h1>Synthetic audio routing test</h1><p>Fixture only. No microphone, camera, real speech, API credits or Twitch. Muted receiver audio is measured before playback.</p><button id="start">Start synthetic microphone</button><button id="dub" disabled>Start synthetic dub</button><button id="stop">Restore original tone</button><button id="end">End test</button><pre id="results">Not started</pre><iframe id="receiver" src="/voice" allow="autoplay"></iframe>
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Voice Box synthetic audio QA</title><style>body{font:16px system-ui;padding:24px}button{padding:12px;margin:6px}pre{white-space:pre-wrap}iframe{width:100%;height:180px}</style><h1>Synthetic audio routing test</h1><p>Fixture only. No microphone, camera, real speech, API credits or Twitch. Muted receiver audio is measured before playback.</p><button id="start">Start synthetic microphone</button><button id="dub" disabled>Start continuous dub</button><button id="timed" disabled>Start viewer dub</button><label>Viewer test seconds <input id="duration" type="number" min="5" max="120" value="7"></label><button id="renew">Simulate provider expiry</button><button id="stop">Restore original tone</button><button id="end">End test</button><pre id="results">Not started</pre><iframe id="receiver" src="/voice" allow="autoplay"></iframe>
 <script type="module">
 import { createBroadcastAudio } from '/broadcast-audio.js';
 import { gatherIce } from '/rtc-utils.js';
-const $ = s => document.querySelector(s); let ctx, identity, timer, receiverSource, analyser, active = false;
-const measurements = [];
-const remotePeers = [], oscillators = [], frequencies = { normal: false, translated: false, restored: false, originalSuppressedDuringDub: false, originalDuringWarmup: false }, failures = [];
+const $ = s => document.querySelector(s); let ctx, identity, timer, receiverSource, receiverStream, analyser, active = false, activeSince = 0, lastEffectId = '', continuousBeyond30s = false;
+// Let actual OBS own the receiver for recording-based acceptance checks.
+const externalReceiver = new URLSearchParams(location.search).get('receiver') === 'obs';
+if (externalReceiver) { $('#receiver').src = 'about:blank'; $('#receiver').hidden = true; document.querySelector('p').textContent = 'Fixture only. No microphone, camera, real speech, API credits or Twitch. OBS owns the receiver: validate sound in its recording; browser frequency measurements are unavailable.'; }
+const measurements = [], diagnostics = [];
+const channels = []; const remotePeers = [], oscillators = [], frequencies = { normal: false, translated: false, restored: false, originalSuppressedDuringDub: false, originalDuringWarmup: false }, failures = [];
 async function api(path, body = {}, signal) { const r = await fetch(`/api/${path}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal}); const result = await r.json(); if(!r.ok) throw new Error(result.error); return result; }
 function tone(hz, delay = 0) { const oscillator = ctx.createOscillator(), gain = ctx.createGain(), output = ctx.createMediaStreamDestination(); oscillator.frequency.value = hz; gain.gain.value = .1; oscillator.connect(gain).connect(output); oscillator.start(ctx.currentTime + delay); oscillators.push(oscillator); return output.stream; }
 async function send(path, body, signal) {
   if(path !== 'voice/sdp') return api(path,body,signal);
   const peer = new RTCPeerConnection(); remotePeers.push(peer);
-  peer.ondatachannel = event => { event.channel.onopen = () => event.channel.send(JSON.stringify({type:'session.output_transcript.delta',delta:'（合成测试音频，不是真人语音）'})); };
+  peer.ondatachannel = event => { channels.push(event.channel); event.channel.onopen = () => event.channel.send(JSON.stringify({type:'session.output_transcript.delta',delta:'（合成测试音频，不是真人语音）'})); };
   await peer.setRemoteDescription({type:'offer',sdp:body.sdp});
   // Reproduce the real provider: peer and transcript connect BEFORE audio.
   const stream = tone(880, 5); stream.getTracks().forEach(t=>peer.addTrack(t,stream));
-  await peer.setLocalDescription(await peer.createAnswer()); await gatherIce(peer,signal); return {sdp:peer.localDescription.sdp};
+  await peer.setLocalDescription(await peer.createAnswer()); await gatherIce(peer,signal,6000); return {sdp:peer.localDescription.sdp};
 }
-const output = createBroadcastAudio({send,notify:message=>failures.push(message)});
+const output = createBroadcastAudio({send,onDiagnostic:item=>diagnostics.push(item),notify:message=>failures.push(message)});
 async function inspect() {
   if(!active) return;
   try {
     await api('capture/heartbeat',identity);
     const state = await (await fetch('/api/state')).json(); output.update(state);
-    const player = $('#receiver').contentDocument.querySelector('audio'); player.muted = true;
-    if(player.srcObject && !receiverSource) { receiverSource = ctx.createMediaStreamSource(player.srcObject); analyser = ctx.createAnalyser(); analyser.fftSize=8192; receiverSource.connect(analyser); const silent = ctx.createGain(); silent.gain.value=0; analyser.connect(silent).connect(ctx.destination); }
+    const player = externalReceiver ? null : $('#receiver').contentDocument.querySelector('audio'); if(player) player.muted = true;
+    if(player?.srcObject && receiverStream !== player.srcObject) { receiverSource?.disconnect(); analyser?.disconnect(); receiverStream=player.srcObject; receiverSource = ctx.createMediaStreamSource(player.srcObject); analyser = ctx.createAnalyser(); analyser.fftSize=8192; receiverSource.connect(analyser); const silent = ctx.createGain(); silent.gain.value=0; analyser.connect(silent).connect(ctx.destination); }
     let hz=0, level=-Infinity, originalDb=-Infinity, translatedDb=-Infinity;
     if(analyser) { const bins = new Float32Array(analyser.frequencyBinCount); analyser.getFloatFrequencyData(bins); let peak=0; for(let i=0;i<bins.length;i++) if(bins[i]>level){level=bins[i];peak=i;} hz=Math.round(peak*ctx.sampleRate/analyser.fftSize); originalDb=bins[Math.round(440*analyser.fftSize/ctx.sampleRate)]; translatedDb=bins[Math.round(880*analyser.fftSize/ctx.sampleRate)]; }
     measurements.push({phase:state.voice.effect?.phase||'original',hz,level:Math.round(level)}); if(measurements.length>80)measurements.shift();
     if(level > -90 && Math.abs(hz-440)<20) { frequencies.normal=true; if(frequencies.translated && !state.voice.effect) frequencies.restored=true; }
     if(state.voice.effect?.phase==='connecting') {
       if(level > -60 && Math.abs(hz-440)<20) frequencies.originalDuringWarmup=true;
-      else failures.push('Original audio dropped during silent translation startup');
+      else if(!externalReceiver && level < -60) failures.push(`Audio went silent during translation startup: ${hz} Hz / ${Math.round(level)} dB`);
     }
     if(level > -90 && Math.abs(hz-880)<20 && state.voice.effect?.phase==='active') frequencies.translated=true; if(state.voice.effect?.phase==='active' && translatedDb-originalDb>30)frequencies.originalSuppressedDuringDub=true;
-    $('#dub').disabled=state.voice.output!=='connected'||!!state.voice.effect;
-    $('#results').textContent=JSON.stringify({output:state.voice.output,phase:state.voice.effect?.phase||'original',frequencyHz:hz,levelDb:Math.round(level),frequencies,failures,measurements:measurements.slice(-12)},null,2);
+    $('#dub').disabled=state.voice.output!=='connected'||!!state.voice.effect; $('#timed').disabled=$('#dub').disabled;
+    const effect=state.voice.effect;
+    if(effect?.id!==lastEffectId){lastEffectId=effect?.id;activeSince=0;}
+    if(effect?.phase==='active' && !activeSince)activeSince=Date.now();
+    if(effect?.mode==='continuous' && effect.phase==='active' && activeSince && Date.now()-activeSince>30000 && Math.abs(hz-880)<20)continuousBeyond30s=true;
+    $('#results').textContent=JSON.stringify({continuousBeyond30s,translationConnections:remotePeers.length,mode:state.voice.effect?.mode,output:state.voice.output,phase:state.voice.effect?.phase||'original',frequencyHz:hz,levelDb:Math.round(level),frequencies,failures,diagnostics,measurements:measurements.slice(-20)},null,2);
   } catch(e) { $('#results').textContent=e.message; }
   finally{if(active)timer=setTimeout(inspect,500);}
 }
@@ -45,7 +52,9 @@ $('#start').onclick=async()=>{
   await api('microphone',{...identity,status:'listening'}); output.update(state); output.attach(tone(440),identity); active=true; $('#start').disabled=true; void inspect();
 };
 $('#dub').onclick=async()=>{await output.resume(); const result=await api('voice/start'); if(!result.applied)failures.push(result.message);};
+$('#timed').onclick=async()=>{await api('settings',{voiceViewerDuration:Number($('#duration').value)});const result=await api('action',{kind:'voice',value:'zh'});if(!result.applied)failures.push(result.message);};
+$('#renew').onclick=()=>channels.at(-1)?.send(JSON.stringify({type:'session.updated',session:{expires_at:Date.now()/1000+31}}));
 $('#stop').onclick=async()=>{output.restore();await api('voice/stop');};
-async function end(){active=false;clearTimeout(timer);output.stop();remotePeers.forEach(p=>p.close());oscillators.forEach(o=>o.stop());await ctx?.close();await api('session',{mode:'demo'});$('#results').textContent=JSON.stringify({ended:true,frequencies,failures,measurements:measurements.slice(-12)},null,2);}
+async function end(){active=false;clearTimeout(timer);output.stop();remotePeers.forEach(p=>p.close());oscillators.forEach(o=>o.stop());await ctx?.close();await api('session',{mode:'demo'});$('#results').textContent=JSON.stringify({ended:true,continuousBeyond30s,translationConnections:remotePeers.length,frequencies,failures,diagnostics,measurements:measurements.slice(-20)},null,2);}
 $('#end').onclick=end;window.addEventListener('beforeunload',()=>{active=false;output.stop();remotePeers.forEach(p=>p.close());void ctx?.close();});
 </script></html>

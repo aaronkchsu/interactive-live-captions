@@ -3,16 +3,15 @@ import assert from 'node:assert/strict';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { StreamSession } from '../src/session.mjs';
 let now = 100000;
-const calls = { translation: 0, chorus: 0, chaos: 0, audio: 0, vision: 0 };
+const calls = { translation: 0, commentary: 0, audio: 0, vision: 0 };
 const provider = {
   translate: async (_ctx, text) => { calls.translation++; return `翻译 ${text}`; },
-  chorus: async (_ctx, messages) => { calls.chorus++; return { text: `Chat reacts to ${messages.at(-1)?.text}`, evidence: messages.slice(0, 3).map(m => m.id), event: 'none' }; },
-  chaos: async () => { calls.chaos++; return { text: `Gravity negotiation ${calls.chaos}`, evidence: [], event: 'none' }; },
+  commentary: async (_ctx, evidence) => { calls.commentary++; return { text: `Comment ${calls.commentary}`, evidence: evidence.messages.slice(0, 3).map(m => m.id) }; },
   audio: async () => { calls.audio++; return { text: '(laughing)', evidence: [], event: 'laughter' }; },
   vision: async () => { calls.vision++; return { text: '(waving)', evidence: [], event: 'waving' }; }
 };
 const sessions = ['alice', 'bob'].map(streamerId => new StreamSession({ streamerId, provider, now: () => now }));
-const contexts = sessions.map(s => { s.available.openai = true; const context = s.begin('live'); s.chat.connected = true; s.setSettings({ preset: 'context', cameraEnabled: true }); return context; });
+const contexts = sessions.map(s => { s.available.openai = true; const context = s.begin('live'); s.chat.connected = true; s.setSettings({ tracks: { primary: { language: 'zh' }, secondary: { enabled: true, mode: 'commentary', inputs: { camera: true } } } }); return context; });
 const samples = [], heap = [], maxima = { segments: 0, messages: 0, activity: 0, queued: 0, active: 0, actions: 0 };
 const flush = () => new Promise(resolve => setImmediate(resolve));
 for (let tick = 0; tick <= 36000; tick++) {
@@ -20,7 +19,7 @@ for (let tick = 0; tick <= 36000; tick++) {
   const started = performance.now();
   for (let index = 0; index < sessions.length; index++) {
     const s = sessions[index], context = contexts[index]; s.heartbeat();
-    if (tick % 300 === 0) s.setSettings({ preset: ['context', 'chaos', 'describe', 'chorus', 'captions'][Math.floor(tick / 300) % 5] });
+    if (tick % 300 === 0) s.setSettings({ tracks: { primary: { language: Math.floor(tick / 300) % 2 ? 'ko' : 'zh' }, secondary: { enabled: Math.floor(tick / 300) % 3 !== 0, troll: Math.floor(tick / 300) % 4 } } });
     if (tick % 30 === 0) {
       s.acceptSpeech({ ...context, segmentId: `s${tick}`, sequence: tick, revision: 1, text: `${s.streamerId} phrase ${tick}`, final: true });
       s.ingestMedia('audio', { ...context, audio: 'AAAA' });
@@ -30,8 +29,8 @@ for (let tick = 0; tick <= 36000; tick++) {
     if (tick % 150 === 0) s.action({ id: `effect${tick}`, kind: 'style', value: tick % 300 === 0 ? 'paper' : 'comic', origin: 'fixture' });
     s.tick(); JSON.stringify(s.overlay());
     maxima.segments = Math.max(maxima.segments, s.segments.size); maxima.messages = Math.max(maxima.messages, s.chat.messages.length); maxima.activity = Math.max(maxima.activity, s.chat.activity.length); maxima.actions = Math.max(maxima.actions, s.seenActions.size);
-    for (const lane of Object.values(s.lanes)) { maxima.queued = Math.max(maxima.queued, lane.pending.length); maxima.active = Math.max(maxima.active, lane.active.size); assert.ok(lane.pending.length <= lane.capacity && lane.active.size <= lane.concurrency); }
-    assert.ok(s.segments.size <= 200 && s.chat.messages.length <= 200 && s.chat.activity.length <= 10000 && s.candidates.length <= 3 && s.recentObservations.length <= 3 && s.seenActions.size <= 1000);
+    for (const lane of [...Object.values(s.lanes), ...Object.values(s.trackRuntime.lanes)]) { maxima.queued = Math.max(maxima.queued, lane.pending.length); maxima.active = Math.max(maxima.active, lane.active.size); assert.ok(lane.pending.length <= lane.capacity && lane.active.size <= lane.concurrency); }
+    assert.ok(s.segments.size <= 200 && s.chat.messages.length <= 200 && s.chat.activity.length <= 10000 && s.trackRuntime.observations.length <= 8 && s.seenActions.size <= 1000);
     assert.ok(!s.snapshot().transcript.some(p => p.source.startsWith(index ? 'alice' : 'bob')));
   }
   samples[tick % 1000] = performance.now() - started; await flush();

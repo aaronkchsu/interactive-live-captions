@@ -1,7 +1,7 @@
 import { gatherIce } from './rtc-utils.js';
 
 /** One microphone -> one mixed output -> one OBS receiver. Never plays on studio speakers. */
-export function createBroadcastAudio({ send, notify = () => {} }) {
+export function createBroadcastAudio({ send, notify = () => {}, onDiagnostic = () => {} }) {
   let input, context, settings, audio, destination, original, originalGain, peer, receiverId, effect;
   let loopTimer, stopped = true, epoch = 0, connecting = false, bridgeAbort, workletReady;
   const onsetBufferSeconds = .12;
@@ -9,7 +9,7 @@ export function createBroadcastAudio({ send, notify = () => {} }) {
   function finishEffect(report = false) {
     const previous = effect; effect = null; gain(originalGain, 1);
     if (!previous) return;
-    previous.abort.abort(); clearTimeout(previous.inputTimer); clearTimeout(previous.endTimer); clearTimeout(previous.connectTimer); clearTimeout(previous.transcriptTimer);
+    previous.abort.abort(); clearTimeout(previous.inputTimer); clearTimeout(previous.endTimer); clearTimeout(previous.connectTimer); clearTimeout(previous.transcriptTimer); clearTimeout(previous.renewTimer);
     if (previous.sink) { previous.sink.pause(); previous.sink.srcObject = null; }
     previous.inputTrack?.stop(); previous.peer?.close(); previous.source?.disconnect(); previous.gain?.disconnect(); previous.delay?.disconnect(); previous.detector?.port.postMessage('stop'); previous.detector?.disconnect(); previous.detector?.port.close();
     if (report && context) void send('voice/status', { ...context, id: previous.id, phase: 'finished' }).catch(() => {});
@@ -42,7 +42,7 @@ export function createBroadcastAudio({ send, notify = () => {} }) {
         if (stopped || signal.aborted || generation !== epoch) return;
         await send('voice/answer', { ...context, id: receiverId, sdp: next.localDescription.sdp }, signal);
       }
-    } catch (error) { if (!stopped && generation === epoch && error.name !== 'AbortError') notify('OBS audio is reconnecting. Check the audio source.'); }
+    } catch (error) { if (!stopped && generation === epoch && error.name !== 'AbortError') { closeBridge(); notify('OBS audio is reconnecting. Check the audio source.'); } }
     finally { connecting = false; if (!stopped && generation === epoch) loopTimer = setTimeout(poll, 1000); }
   }
   async function startEffect(request) {
@@ -50,16 +50,24 @@ export function createBroadcastAudio({ send, notify = () => {} }) {
     const current = { id: request.id, abort: new AbortController(), active: false, inputTrack: input.getAudioTracks()[0].clone() };
     effect = current;
     const alive = () => effect === current && !current.abort.signal.aborted;
-    const fail = () => { if (!alive()) return; const saved = context; finishEffect(); notify('Chinese voice stopped. Normal microphone restored.'); void send('voice/status', { ...saved, id: current.id, phase: 'error' }).catch(() => {}); };
+    const fail = (reason = 'Connection lost.') => { if (!alive()) return; const saved = context; finishEffect(); notify(`${typeof reason === 'string' ? reason : 'Connection lost.'} Voice translation stopped. Normal microphone restored.`); void send('voice/status', { ...saved, id: current.id, phase: 'error' }).catch(() => {}); };
+    const renew = () => {
+      if (!alive()) return;
+      const saved = context; finishEffect();
+      void send('voice/status', { ...saved, id: current.id, phase: 'renew' }).catch(() => notify('Voice translation could not reconnect. Your normal microphone is restored.'));
+    };
     const activate = async () => {
       if (!alive() || current.active || current.channel?.readyState !== 'open' || !current.source || !current.audible) return;
       // The buffer preserves the detected onset; schedule both gains against
-      // the same audio clock so English stays audible until Chinese arrives.
+      // the same audio clock so Original speech stays audible until translation arrives.
       const switchAt = Math.max(audio.currentTime, current.onset + onsetBufferSeconds);
       current.active = true; clearTimeout(current.connectTimer); gain(originalGain, 0, switchAt); gain(current.gain, 1, switchAt);
-      current.inputTimer = setTimeout(() => { if (alive()) current.inputTrack.enabled = false; }, 20000);
-      // A bounded tail lets already translated speech finish; never leaves the stream muted.
-      current.endTimer = setTimeout(() => { if (alive()) finishEffect(true); }, 25000);
+      if (request.mode !== 'continuous') {
+        const durationMs = Number.isFinite(request.durationMs) ? Math.min(120000, Math.max(5000, request.durationMs)) : 20000;
+        current.inputTimer = setTimeout(() => { if (alive()) current.inputTrack.enabled = false; }, durationMs);
+        // Viewer effects keep their bounded input window and finishing tail.
+        current.endTimer = setTimeout(() => { if (alive()) finishEffect(true); }, durationMs + 5000);
+      }
       try { const result = await send('voice/status', { ...context, id: current.id, phase: 'active' }, current.abort.signal); if (!result.accepted && alive()) finishEffect(); } catch { fail(); }
     };
     try {
@@ -70,11 +78,21 @@ export function createBroadcastAudio({ send, notify = () => {} }) {
       translation.addTrack(current.inputTrack, new MediaStream([current.inputTrack]));
       current.channel = translation.createDataChannel('oai-events');
       current.channel.onopen = activate;
+      current.channel.onclose = () => fail('Translation connection closed.');
       let transcript = '', lastUpdate = 0;
       const publishText = () => { clearTimeout(current.transcriptTimer); current.transcriptTimer = null; if (!alive()) return; lastUpdate = Date.now(); void send('voice/status', { ...context, id: current.id, text: transcript }, current.abort.signal).catch(() => {}); };
       current.channel.onmessage = event => {
         if (!alive()) return; let message; try { message = JSON.parse(event.data); } catch { return; }
-        if (message.type === 'error') { fail(); return; }
+        // Renew against the provider's actual expiry, not a guessed session limit.
+        if (request.mode === 'continuous' && ['session.created', 'session.updated'].includes(message.type)) {
+          const expiresAt = message.session?.expires_at;
+          if (Number.isFinite(expiresAt) && expiresAt * 1000 > Date.now()) {
+            clearTimeout(current.renewTimer);
+            current.renewTimer = setTimeout(renew, Math.min(2147483647, Math.max(1000, expiresAt * 1000 - Date.now() - 30000)));
+          }
+        }
+        if (message.type === 'session.closed') { if (request.mode === 'continuous' && current.active) renew(); else finishEffect(true); return; }
+        if (message.type === 'error') { fail('Translation provider reported an error.'); return; }
         if (message.type === 'session.output_transcript.delta' && typeof message.delta === 'string') {
           transcript = (transcript + message.delta).slice(-240);
           if (Date.now() - lastUpdate > 250) publishText(); else if (!current.transcriptTimer) current.transcriptTimer = setTimeout(publishText, 250);
@@ -84,23 +102,26 @@ export function createBroadcastAudio({ send, notify = () => {} }) {
         if (!alive()) return; current.outputTrack = event.track;
         const remote = event.streams[0] || new MediaStream([event.track]);
         // A muted media sink keeps WebRTC decoding active in embedded browsers.
-        current.sink = new Audio(); current.sink.muted = true; current.sink.srcObject = remote; void current.sink.play().catch(fail);
+        current.sink = new Audio(); current.sink.muted = true; current.sink.srcObject = remote; void current.sink.play().catch(() => fail('Translated audio playback could not start.'));
         current.source = audio.createMediaStreamSource(remote);
         current.gain = audio.createGain(); current.gain.gain.value = 0;
         current.delay = audio.createDelay(onsetBufferSeconds); current.delay.delayTime.value = onsetBufferSeconds;
         current.detector = new AudioWorkletNode(audio, 'dub-readiness');
         current.detector.port.onmessage = ({ data }) => { if (!alive() || data.type !== 'audible') return; current.audible = true; current.onset = data.onset; void activate(); };
-        current.detector.onprocessorerror = fail;
+        current.detector.onprocessorerror = () => fail('Audio processor stopped.');
         current.source.connect(current.detector).connect(current.delay).connect(current.gain).connect(destination);
-        event.track.onended = fail;
+        event.track.onended = () => fail('Translated audio track ended.');
       };
-      translation.onconnectionstatechange = () => { if (['failed', 'disconnected'].includes(translation.connectionState)) fail(); };
-      current.connectTimer = setTimeout(fail, 14000);
+      translation.onconnectionstatechange = () => { if (['failed', 'disconnected'].includes(translation.connectionState)) fail('Translation connection lost.'); };
+      current.connectTimer = setTimeout(() => {
+        onDiagnostic({ stage: 'translation-timeout', peer: translation.connectionState, channel: current.channel?.readyState, audible: !!current.audible, source: !!current.source, audio: audio?.state, localCandidates: (translation.localDescription?.sdp.match(/a=candidate:/g)||[]).length, remoteCandidates:(translation.remoteDescription?.sdp.match(/a=candidate:/g)||[]).length });
+        fail('No translated audio arrived before the connection deadline.');
+      }, 14000);
       const offer = await translation.createOffer(); if (!alive()) return;
       await translation.setLocalDescription(offer);
       const answer = await send('voice/sdp', { ...context, id: current.id, sdp: offer.sdp }, current.abort.signal);
       if (!alive()) return; await translation.setRemoteDescription({ type: 'answer', sdp: answer.sdp });
-    } catch { fail(); }
+    } catch { fail('Translation setup failed.'); }
   }
   return {
     attach(stream, identity) { stop(); input = stream; context = identity; stopped = false; void poll(); },

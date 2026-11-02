@@ -57,20 +57,23 @@ test('EventSub chat and mapped rewards normalize once and respect moderator iden
   const credentials = new CredentialProvider(new MemoryStorage()), context = { streamerId: 'alice' };
   await credentials.update(context, { twitchClientId: 'client', twitchToken: 'token' });
   const chats = [], actions = [], subscriptions = [], statuses = []; let socket;
-  const adapter = new TwitchAdapter({ context, credentials, onStatus: value => statuses.push(value), onChat: value => chats.push(value), onAction: value => actions.push(value), onClear: () => {}, onDelete: () => {}, mappings: () => ({ reward1: 'chaos' }),
+  const adapter = new TwitchAdapter({ context, credentials, onStatus: value => statuses.push(value), onChat: value => chats.push(value), onAction: value => actions.push(value), onClear: () => {}, onDelete: () => {}, mappings: () => ({ reward1: 'addon:red' }), subscriptionAddons: () => [{id:'roast'}],
     fetcher: async (url, options) => {
-      if (url.includes('/validate')) return { ok: true, json: async () => ({ client_id: 'client', user_id: 'alice', login: 'alice', scopes: ['user:read:chat', 'channel:read:redemptions'] }) };
+      if (url.includes('/validate')) return { ok: true, json: async () => ({ client_id: 'client', user_id: 'alice', login: 'alice', scopes: ['user:read:chat', 'channel:read:redemptions', 'channel:read:subscriptions'] }) };
       subscriptions.push(JSON.parse(options.body)); return { ok: true, json: async () => ({ data: [] }) };
     }, socketFactory: () => { socket = new EventEmitter(); socket.addEventListener = socket.on.bind(socket); socket.close = () => socket.emit('close'); return socket; }
   });
   try {
     await adapter.connect(); const send = (type, payload, id = type) => socket.emit('message', { data: JSON.stringify({ metadata: { message_type: type, message_id: id }, payload }) });
     send('session_welcome', { session: { id: 'socket1', keepalive_timeout_seconds: 30 } }); await new Promise(r => setImmediate(r));
-    assert.equal(subscriptions.length, 4); assert.equal(statuses.at(-1).status, 'connected');
+    assert.equal(subscriptions.length, 5); assert.equal(statuses.at(-1).subscriptionAccess,true); assert.equal(statuses.at(-1).status, 'connected');
     const chat = { subscription: { type: 'channel.chat.message' }, event: { message_id: 'chat1', chatter_user_id: 'alice', chatter_user_name: 'Alice', message: { text: '!mode reset' }, badges: [] } };
     send('notification', chat, 'delivery1'); send('notification', chat, 'delivery1');
     const reward = { subscription: { type: 'channel.channel_points_custom_reward_redemption.add' }, event: { id: 'redemption1', reward: { id: 'reward1' }, user_name: 'Viewer' } };
     send('notification', reward, 'delivery2'); send('notification', reward, 'delivery2'); await new Promise(r => setImmediate(r));
-    assert.equal(chats.length, 1); assert.equal(actions.length, 2); assert.equal(actions[0].moderator, true); assert.equal(actions[0].kind, 'reset'); assert.equal(actions[1].value, 'chaos'); assert.equal(actions[1].moderator, false);
+    assert.equal(chats.length, 1); assert.equal(actions.length, 2); assert.equal(actions[0].moderator, true); assert.equal(actions[0].kind, 'reset'); assert.equal(actions[1].kind, 'addon'); assert.equal(actions[1].value, 'red'); assert.equal(actions[1].moderator, false);
+    const sub = { subscription: { type: 'channel.subscribe' }, event: { user_name: 'New viewer' } };
+    send('notification', sub, 'sub1'); send('notification', sub, 'sub1'); await new Promise(r=>setImmediate(r));
+    assert.equal(actions.length,3); assert.equal(actions[2].value,'roast'); assert.equal(actions[2].origin,'subscription');
   } finally { adapter.disconnect(); }
 });

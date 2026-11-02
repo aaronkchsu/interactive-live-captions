@@ -1,3 +1,4 @@
+import { captureFailure, safeCaptureDetail } from './public/capture-errors.js';
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { resolve, dirname, extname, sep } from 'node:path';
@@ -36,10 +37,17 @@ const provider = new OpenAIProvider({ credentials, models, onUsage: (context, us
 session = new StreamSession({ streamerId: owner.streamerId, provider, settings: await storage.get(owner.streamerId, 'settings') });
 session.available = await credentials.status(owner);
 const streams = new StateStreams();
+let overlayQueued = false;
+session.onChange = () => {
+  if (overlayQueued) return;
+  overlayQueued = true;
+  queueMicrotask(() => { overlayQueued = false; streams.publish('overlay', session.overlay()); });
+};
 const twitch = new TwitchAdapter({ context: owner, credentials,
   onStatus: state => { const wasConnected = session.chat.connected; session.twitch = state; session.chat.connected = state.status === 'connected'; if (!wasConnected && session.chat.connected) { session.chat.reset(); session.chat.connected = true; } },
-  onChat: message => session.chat.add(message), onDelete: id => session.chat.remove(id), onClear: () => { session.chat.messages = []; },
-  onAction: action => { const result = session.action(action); if (!result.applied) session.addEvent(result.message || 'Audience cooldown active.', action.origin); if (action.kind === 'language' && result.applied) void persistSettings(); },
+  onChat: message => { if (session.enabled('chorus')) session.chat.add(message); }, onDelete: id => session.removeChat(id), onClear: () => session.removeChat(),
+  onAction: action => { const result = session.action(action); if (!result.applied) session.addEvent(result.message || 'Audience cooldown active.', action.origin); if ((action.kind === 'language' || result.persisted) && result.applied) void persistSettings(); },
+  subscriptionAddons: () => session.base.addons.filter(a => a.enabled && a.trigger === 'subscription').slice(0, 1),
   mappings: () => session.base.rewardMappings });
 let publicOrigin = `http://localhost:${port}`;
 const oauth = new TwitchOAuth({ credentials, callback: `${publicOrigin}/auth/twitch/callback` });
@@ -51,7 +59,7 @@ async function readBody(request, limit = 16000) {
   return Buffer.concat(chunks).toString('utf8');
 }
 function capture(body) { if (!session.owns(body)) throw new Error('This capture session has expired. Start again.'); }
-const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.svg': 'image/svg+xml', '.json': 'application/json' };
+const mime = { '.html': 'text/html', '.css': 'text/css', '.js': 'text/javascript', '.mjs': 'text/javascript', '.svg': 'image/svg+xml', '.json': 'application/json', '.ttf': 'font/ttf', '.woff2': 'font/woff2', '.txt': 'text/plain' };
 const server = http.createServer(async (request, response) => {
   const hostname = String(request.headers.host || '').split(':')[0];
   if (!['localhost', '127.0.0.1'].includes(hostname)) return json(response, 403, { error: 'Use the local studio address.' });
@@ -91,7 +99,7 @@ const server = http.createServer(async (request, response) => {
         case '/api/voice/status': capture(body); return json(response, 200, { accepted: session.voice.status(body) });
         case '/api/voice/stop': session.voice.cancel(); return json(response, 200, { ok: true });
         case '/api/voice/test-tone': session.voice.testTone(); return json(response, 200, { ok: true });
-        case '/api/voice/start': return json(response, 200, session.action({ id: randomUUID(), kind: 'voice', value: 'zh', moderator: true, origin: 'studio', actor: 'You' }));
+        case '/api/voice/start': return json(response, 200, session.startVoice());
         case '/api/voice/sdp': {
           capture(body); const effect = session.voice.effect;
           if (!effect || effect.id !== body.id || effect.phase !== 'connecting' || effect.negotiating || !session.voice.connected() || !session.base.voiceEnabled) throw new Error('Voice effect is unavailable or already connecting.');
@@ -99,7 +107,7 @@ const server = http.createServer(async (request, response) => {
           effect.negotiating = true;
           const controller = new AbortController(); response.on('close', () => { if (!response.writableEnded) controller.abort(); });
           try {
-            const sdp = await provider.negotiateTranslation(session.context(), body.sdp, controller.signal);
+            const sdp = await provider.negotiateTranslation(session.context(), body.sdp, controller.signal, effect.language);
             capture(body); if (!session.voice.owns(body.id)) throw new Error('Voice effect ended.');
             return json(response, 200, { sdp });
           } catch (error) { if (session.voice.owns(body.id)) session.voice.cancel(error.message); throw error; }
@@ -117,7 +125,11 @@ const server = http.createServer(async (request, response) => {
         case '/api/camera': {
           capture(body); const target = url.pathname.endsWith('camera') ? session.camera : session.microphone;
           target.status = ['listening', 'error', 'stopped', 'starting', 'idle'].includes(body.status) ? body.status : 'idle';
-          target.error = String(body.error || '').slice(0, 200);
+          target.error = safeCaptureDetail(body.error);
+          if (target === session.microphone) {
+            session.microphone.failure = target.status === 'error' ? captureFailure({name: body.failure?.code, message: body.failure?.detail || body.error}, body.failure?.stage) : null;
+            if (session.microphone.failure) target.error = session.microphone.failure.message;
+          }
           if (target === session.microphone && ['stopped', 'error'].includes(target.status)) session.stopCapture();
           return json(response, 200, { ok: true });
         }
@@ -130,8 +142,8 @@ const server = http.createServer(async (request, response) => {
           capture(body); return json(response, 200, { sdp: answer });
         }
         case '/api/playback': if (session.mode !== 'demo') throw new Error('Playback applies to sample captions.'); session.playing = !session.playing; if (session.playing) session.showDemo(); return json(response, 200, session.snapshot());
-        case '/api/action': return json(response, 200, session.action({ id: randomUUID(), kind: body.kind, value: body.value, moderator: true, origin: 'demo', actor: 'Studio preview' }));
-        case '/api/effects/reset': session.voice.cancel(); session.effect = null; session.resetOptional(); if (session.mode === 'demo') session.showDemo(); return json(response, 200, session.snapshot());
+        case '/api/action': { const result = session.action({ id: randomUUID(), kind: body.kind, value: body.value, moderator: true, origin: 'demo', actor: 'Studio preview' }); if (result.persisted) await persistSettings(); return json(response, 200, result); }
+        case '/api/effects/reset': if (session.voice.effect?.mode !== 'continuous') session.voice.cancel(); session.clearEffect(); return json(response, 200, session.snapshot());
         case '/api/reset': session.setSettings(defaults); session.lastAction = -Infinity; await persistSettings(); return json(response, 200, session.snapshot());
         case '/api/setup/openai': {
           if (typeof body.key !== 'string' || body.key.length > 512) throw new Error('Enter an OpenAI key.');
@@ -151,12 +163,13 @@ const server = http.createServer(async (request, response) => {
           session.available = await credentials.status(owner); return json(response, 200, { saved: true });
         }
         case '/api/twitch/oauth': {
-          const authorization = await oauth.authorize(owner);
+          const authorization = await oauth.authorize(owner, session.base.addons.some(a => a.enabled && a.trigger === 'subscription'));
           response.setHeader('Set-Cookie', `voicebox_oauth=${authorization.state}; Path=/auth/twitch; HttpOnly; SameSite=Lax; Max-Age=600`);
           return json(response, 200, { url: authorization.url });
         }
         case '/api/twitch/connect': await twitch.connect(); return json(response, 200, { ok: true });
         case '/api/twitch/disconnect': twitch.disconnect(); await credentials.update(owner, { twitchToken: '', twitchRefreshToken: '' }); session.available = await credentials.status(owner); return json(response, 200, { ok: true });
+        case '/api/twitch/preview': return json(response, 200, await twitch.preview(typeof body.channel === 'string' ? body.channel.trim() : ''));
         case '/api/twitch/rewards': return json(response, 200, { rewards: await twitch.rewards() });
         default: return json(response, 404, { error: 'Unknown studio action.' });
       }
@@ -165,7 +178,9 @@ const server = http.createServer(async (request, response) => {
     const path = resolve(root, 'public', `.${decodeURIComponent(pathname)}`);
     if (!path.startsWith(resolve(root, 'public') + sep)) return json(response, 403, { error: 'Forbidden' });
     const content = await readFile(path);
-    response.writeHead(200, { 'Content-Type': `${mime[extname(path)] || 'application/octet-stream'}; charset=utf-8`, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' }); response.end(content);
+    const contentType = mime[extname(path)] || 'application/octet-stream';
+    const encoding = contentType.startsWith('text/') || contentType === 'application/json' || contentType === 'image/svg+xml' ? '; charset=utf-8' : '';
+    response.writeHead(200, { 'Content-Type': contentType + encoding, 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer' }); response.end(content);
   } catch (error) { if (!response.headersSent) json(response, error.code === 'ENOENT' ? 404 : 400, { error: error.code === 'ENOENT' ? 'Not found' : error.message }); else response.destroy(); }
 });
 let ticks = 0;
@@ -177,6 +192,9 @@ server.listen(port, '127.0.0.1', () => {
   if (!['localhost', '127.0.0.1'].includes(parsed.hostname)) throw new Error('This release supports a local APP_ORIGIN only.');
   oauth.callback = `${publicOrigin}/auth/twitch/callback`;
   console.log(`Streamer Voice Box studio: ${publicOrigin}`); console.log(`OBS browser source: ${publicOrigin}/overlay`);
+  if (!testMode && session.available.twitch) void twitch.connect().catch(() => {
+    session.addEvent('Twitch could not reconnect. Use Reconnect Twitch in Setup.');
+  });
 });
 function shutdown() { clearInterval(tickTimer); clearInterval(heartbeatTimer); session.close(); twitch.disconnect(); streams.close(); server.close(() => process.exit(0)); }
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);

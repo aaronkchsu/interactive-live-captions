@@ -1,0 +1,36 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { streamPreview } from '../public/stream-preview.js';
+
+test('automatic preview follows connection changes and rejects stale account images', async t => {
+  const elements = Object.fromEntries(['#preview-stage', '#stream-snapshot', '#preview-source-status'].map(id => [id, { dataset: {}, hidden: true, removeAttribute() {} }]));
+  const events = {}, calls = [];
+  t.mock.method(globalThis, 'setTimeout', () => 1);
+  t.mock.method(globalThis, 'clearTimeout', () => {});
+  const original = { document: globalThis.document, window: globalThis.window, Image: globalThis.Image };
+  globalThis.document = { hidden: false, querySelector: id => elements[id], addEventListener: (name, fn) => { events[name] = fn; } };
+  globalThis.window = { addEventListener() {} };
+  globalThis.Image = class { async decode() {} };
+  t.after(() => { for (const [key, value] of Object.entries(original)) { if (value === undefined) delete globalThis[key]; else globalThis[key] = value; } });
+  const preview = streamPreview({ api: (path, body, signal) => new Promise(resolve => calls.push({path, body, signal, resolve})) });
+  const connected = channel => ({twitch: {status: 'connected', channel}});
+  const flush = () => new Promise(resolve => setImmediate(resolve));
+  preview.render({twitch: {status:'disconnected'}});
+  assert.equal(calls.length, 0);
+  preview.render(connected('alice')); preview.render(connected('alice'));
+  assert.equal(calls.length, 1); assert.deepEqual(calls[0].body, {});
+  preview.render(connected('bob'));
+  assert.equal(calls[0].signal.aborted, true);
+  calls[1].resolve({status:'offline', image:''}); await flush();
+  assert.equal(elements['#preview-stage'].dataset.backdrop, 'sample');
+  assert.match(elements['#preview-source-status'].textContent, /@bob/);
+  calls[0].resolve({status:'live',image:'https://static-cdn.jtvnw.net/alice.jpg'}); await flush();
+  assert.equal(elements['#stream-snapshot'].hidden, true);
+  events.visibilitychange();
+  calls[2].resolve({status:'recorded',image:'https://static-cdn.jtvnw.net/bob.jpg',title:'Saved'}); await flush();
+  assert.equal(elements['#preview-stage'].dataset.backdrop, 'twitch');
+  preview.render({twitch:{status:'disconnected'}});
+  assert.equal(elements['#stream-snapshot'].hidden, true);
+  assert.equal(elements['#preview-stage'].dataset.backdrop, 'sample');
+  assert.match(elements['#preview-source-status'].textContent, /connect Twitch/);
+});

@@ -1,0 +1,200 @@
+[
+  {
+    "id": "sans",
+    "name": "Inter",
+    "group": "Clean",
+    "family": "Inter",
+    "weight": 700,
+    "file": "/fonts/sans.ttf",
+    "source": "https://fonts.gstatic.com/s/inter/v20/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuFuYMZg.ttf"
+  },
+  {
+    "id": "dm-sans",
+    "name": "DM Sans",
+    "group": "Clean",
+    "family": "DM Sans",
+    "weight": 700,
+    "file": "/fonts/dm-sans.ttf",
+    "source": "https://fonts.gstatic.com/s/dmsans/v17/rP2tp2ywxg089UriI5-g4vlH9VoD8CmcqZG40F9JadbnoEwARZthTg.ttf"
+  },
+  {
+    "id": "manrope",
+    "name": "Manrope",
+    "group": "Clean",
+    "family": "Manrope",
+    "weight": 700,
+    "file": "/fonts/manrope.ttf",
+    "source": "https://fonts.gstatic.com/s/manrope/v23/xn7_YHE41ni1AdIRqAuZuw1Bx9mbZk4aE-_F.ttf"
+  },
+  {
+    "id": "space-grotesk",
+    "name": "Space Grotesk",
+    "group": "Clean",
+    "family": "Space Grotesk",
+    "weight": 700,
+    "file": "/fonts/space-grotesk.ttf",
+    "source": "https://fonts.gstatic.com/s/spacegrotesk/v22/V8mQoQDjQSkFtoMM3T6r8E7mF71Q-gOoraIAEj4PVksj.ttf"
+  },
+  {
+    "id": "montserrat",
+    "name": "Montserrat",
+    "group": "Clean",
+    "family": "Montserrat",
+    "weight": 700,
+    "file": "/fonts/montserrat.ttf",
+    "source": "https://fonts.gstatic.com/s/montserrat/v31/JTUHjIg1_i6t8kCHKm4532VJOt5-QNFgpCuM70w-.ttf"
+  },
+  {
+    "id": "poppins",
+    "name": "Poppins",
+    "group": "Clean",
+    "family": "Poppins",
+    "weight": 700,
+    "file": "/fonts/poppins.ttf",
+    "source": "https://fonts.gstatic.com/s/poppins/v24/pxiByp8kv8JHgFVrLCz7V1s.ttf"
+  },
+  {
+    "id": "rubik",
+    "name": "Rubik",
+    "group": "Clean",
+    "family": "Rubik",
+    "weight": 700,
+    "file": "/fonts/rubik.ttf",
+    "source": "https://fonts.gstatic.com/s/rubik/v31/iJWZBXyIfDnIV5PNhY1KTN7Z-Yh-4I-1UA.ttf"
+  },
+  {
+    "id": "nunito",
+    "name": "Nunito",
+    "group": "Rounded",
+    "family": "Nunito",
+    "weight": 700,
+    "file": "/fonts/nunito.ttf",
+    "source": "https://fonts.gstatic.com/s/nunito/v32/XRXI3I6Li01BKofiOc5wtlZ2di8HDFwmRTM.ttf"
+  },
+  {
+    "id": "oswald",
+    "name": "Oswald",
+    "group": "Bold",
+    "family": "Oswald",
+    "weight": 700,
+    "file": "/fonts/oswald.ttf",
+    "source": "https://fonts.gstatic.com/s/oswald/v57/TK3_WkUHHAIjg75cFRf3bXL8LICs1xZogUE.ttf"
+  },
+  {
+    "id": "anton",
+    "name": "Anton",
+    "group": "Bold",
+    "family": "Anton",
+    "weight": 400,
+    "file": "/fonts/anton.ttf",
+    "source": "https://fonts.gstatic.com/s/anton/v27/1Ptgg87LROyAm0K0.ttf"
+  },
+  {
+    "id": "bebas-neue",
+    "name": "Bebas Neue",
+    "group": "Bold",
+    "family": "Bebas Neue",
+    "weight": 400,
+    "file": "/fonts/bebas-neue.ttf",
+    "source": "https://fonts.gstatic.com/s/bebasneue/v16/JTUSjIg69CK48gW7PXooxW4.ttf"
+  },
+  {
+    "id": "bungee",
+    "name": "Bungee",
+    "group": "Bold",
+    "family": "Bungee",
+    "weight": 400,
+    "file": "/fonts/bungee.ttf",
+    "source": "https://fonts.gstatic.com/s/bungee/v17/N0bU2SZBIuF2PU_ECg.ttf"
+  },
+  {
+    "id": "fredoka",
+    "name": "Fredoka",
+    "group": "Rounded",
+    "family": "Fredoka",
+    "weight": 700,
+    "file": "/fonts/fredoka.ttf",
+    "source": "https://fonts.gstatic.com/s/fredoka/v17/X7nP4b87HvSqjb_WIi2yDCRwoQ_k7367_B-i2yQag0-mac3OFiXMFg.ttf"
+  },
+  {
+    "id": "lilita-one",
+    "name": "Lilita One",
+    "group": "Rounded",
+    "family": "Lilita One",
+    "weight": 400,
+    "file": "/fonts/lilita-one.ttf",
+    "source": "https://fonts.gstatic.com/s/lilitaone/v17/i7dPIFZ9Zz-WBtRtedDbUEY.ttf"
+  },
+  {
+    "id": "caveat",
+    "name": "Caveat",
+    "group": "Handwritten",
+    "family": "Caveat",
+    "weight": 700,
+    "file": "/fonts/caveat.ttf",
+    "source": "https://fonts.gstatic.com/s/caveat/v23/WnznHAc5bAfYB2QRah7pcpNvOx-pjRV6SII.ttf"
+  },
+  {
+    "id": "permanent-marker",
+    "name": "Permanent Marker",
+    "group": "Handwritten",
+    "family": "Permanent Marker",
+    "weight": 400,
+    "file": "/fonts/permanent-marker.ttf",
+    "source": "https://fonts.gstatic.com/s/permanentmarker/v16/Fh4uPib9Iyv2ucM6pGQMWimMp004Hao.ttf"
+  },
+  {
+    "id": "patrick-hand",
+    "name": "Patrick Hand",
+    "group": "Handwritten",
+    "family": "Patrick Hand",
+    "weight": 400,
+    "file": "/fonts/patrick-hand.ttf",
+    "source": "https://fonts.gstatic.com/s/patrickhand/v25/LDI1apSQOAYtSuYWp8ZhfYeMWQ.ttf"
+  },
+  {
+    "id": "playfair-display",
+    "name": "Playfair Display",
+    "group": "Serif",
+    "family": "Playfair Display",
+    "weight": 700,
+    "file": "/fonts/playfair-display.ttf",
+    "source": "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFvD-vYSZviVYUb_rj3ij__anPXJzDwcbmjWBN2PKeiukDQ.ttf"
+  },
+  {
+    "id": "lora",
+    "name": "Lora",
+    "group": "Serif",
+    "family": "Lora",
+    "weight": 700,
+    "file": "/fonts/lora.ttf",
+    "source": "https://fonts.gstatic.com/s/lora/v37/0QI6MX1D_JOuGQbT0gvTJPa787z5vCJG.ttf"
+  },
+  {
+    "id": "roboto-slab",
+    "name": "Roboto Slab",
+    "group": "Serif",
+    "family": "Roboto Slab",
+    "weight": 700,
+    "file": "/fonts/roboto-slab.ttf",
+    "source": "https://fonts.gstatic.com/s/robotoslab/v36/BngbUXZYTXPIvIBgJJSb6s3BzlRRfKOFbvjoa4OWaA.ttf"
+  },
+  {
+    "id": "space-mono",
+    "name": "Space Mono",
+    "group": "Monospace",
+    "family": "Space Mono",
+    "weight": 700,
+    "file": "/fonts/space-mono.ttf",
+    "source": "https://fonts.gstatic.com/s/spacemono/v17/i7dMIFZifjKcF5UAWdDRaPpZYFI.ttf"
+  },
+  {
+    "id": "jetbrains-mono",
+    "name": "JetBrains Mono",
+    "group": "Monospace",
+    "family": "JetBrains Mono",
+    "weight": 700,
+    "file": "/fonts/jetbrains-mono.ttf",
+    "source": "https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbY2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8L6tjPQ.ttf"
+  }
+]

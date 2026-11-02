@@ -1,8 +1,13 @@
+import { ensureCaptionFont, fontStyle } from './fonts.js';
+import { voiceLanguage } from './voice-languages.js';
 import { captionLanguage } from './languages.js';
 export function clearCaption(target) { target.replaceChildren(); delete target.dataset.renderKey; }
 export function renderCaption(target, state) {
   if (state.output?.state === 'hidden') { clearCaption(target); return; }
   const settings = state.presentationSettings || state.settings;
+  const voice = (state.captionVoice || state.voice)?.effect;
+  if (state.tracks && !voice) { renderTracks(target, state, settings); return; }
+  delete target.dataset.tracks;
   target.dataset.style = settings.style; target.dataset.position = settings.position; target.dataset.reduced = String(settings.reducedMotion);
   target.dataset.secondary = settings.secondaryPosition || 'above';
   target.style.setProperty('--caption-size', settings.fontSize); target.style.setProperty('--plate', settings.backplate / 100);
@@ -15,8 +20,10 @@ export function renderCaption(target, state) {
   clearCaption(target); target.dataset.renderKey = key;
   const stack = document.createElement('div'); stack.className = 'caption-stack';
   if (dub) {
-    const badge = document.createElement('span'); badge.className = 'dub-badge'; badge.textContent = dubbing ? 'AI DUB · 中文' : 'CHINESE VOICE · CONNECTING'; stack.append(badge);
-    if (dubbing && dub.text) { const line = document.createElement('div'); line.className = 'dub-caption'; line.lang = 'zh-Hans'; line.textContent = dub.text.slice(-160); stack.append(line); }
+    const design = state.tracks?.find(track=>track.id==='primary')?.design;
+    if(design){const font=fontStyle(design);void ensureCaptionFont(design);stack.style.setProperty('--dub-font',font.family);stack.style.setProperty('--dub-weight',font.weight);}
+    const badge = document.createElement('span'); badge.className = 'dub-badge'; badge.textContent = dubbing ? `AI DUB · ${voiceLanguage(dub.language || 'zh')?.name || 'Voice translation'}` : 'VOICE TRANSLATION · CONNECTING'; stack.append(badge);
+    if (dubbing && dub.text) { const line = document.createElement('div'); line.className = 'dub-caption'; line.lang = voiceLanguage(dub.language || 'zh')?.tag || 'en'; line.textContent = dub.text.slice(-160); stack.append(line); }
   }
   if (settings.preset === 'chaos') { const badge = document.createElement('span'); badge.className = 'chaos-badge'; badge.textContent = 'CHAOS MODE · FICTION'; stack.append(badge); }
   if (!hiddenSpeech) {
@@ -47,4 +54,26 @@ export function renderCaption(target, state) {
     const text = document.createElement('span'); text.lang = cue.lang; text.dir = captionLanguage(state.secondary.language)?.dir || 'ltr'; text.textContent = state.secondary.text; cue.append(label, text); stack.append(cue);
   }
   target.append(stack);
+}
+
+function renderTracks(target, state, settings) {
+  const key = JSON.stringify([state.sessionId, state.tracks, settings.reducedMotion]);
+  if (target.dataset.renderKey === key && target.childNodes.length) return;
+  clearCaption(target); target.dataset.renderKey = key; target.dataset.tracks = 'true';
+  target.dataset.reduced = String(settings.reducedMotion);
+  for (const position of ['top', 'center', 'bottom']) {
+    const group = document.createElement('div'); group.className = 'track-group'; group.dataset.position = position;
+    for (const track of state.tracks.filter(t => t.enabled && t.design.position === position)) {
+      if (!track.text && track.mode !== 'commentary') continue;
+      const block = document.createElement('div'); block.className = 'track-output'; block.dataset.track = track.id; block.dataset.style = track.design.style;
+      block.style.setProperty('--caption-size', track.design.fontSize); block.style.setProperty('--plate', track.design.backplate / 100);
+      block.style.setProperty('--track-color', track.design.color); block.style.setProperty('--track-accent', track.design.accent);
+      const font = fontStyle(track.design); void ensureCaptionFont(track.design);
+      block.style.fontFamily = font.family; block.style.setProperty('--track-font-weight', font.weight);
+      if (track.label) { const label = document.createElement('span'); label.className = 'track-label'; label.textContent = `${track.origin === 'demo' ? 'SAMPLE · ' : ''}${track.label}`; block.append(label); }
+      if (track.text) { const text = document.createElement('div'); text.className = 'track-text'; text.lang = captionLanguage(track.language)?.tag || 'en'; text.dir = captionLanguage(track.language)?.dir || 'ltr'; const at = track.design.emphasis && track.emphasis ? track.text.toLowerCase().indexOf(track.emphasis.toLowerCase()) : -1; if (at >= 0) { const accent = document.createElement('span'); accent.className = 'track-emphasis'; accent.textContent = track.text.slice(at, at + track.emphasis.length); text.append(document.createTextNode(track.text.slice(0,at)), accent, document.createTextNode(track.text.slice(at + track.emphasis.length))); } else text.textContent = track.text; text.dataset.draft = String(track.pending); block.append(text); }
+      group.append(block);
+    }
+    target.append(group);
+  }
 }

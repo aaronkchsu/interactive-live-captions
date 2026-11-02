@@ -9,8 +9,8 @@ const flush = () => new Promise(resolve => setImmediate(resolve));
 const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b; }); return { promise, resolve, reject }; };
 function fixture(owner = 'alice', overrides = {}) {
   let now = 100000; const requests = [];
-  const provider = { translate: (...args) => { const value = deferred(); requests.push({ ...value, args }); return value.promise; }, audio: async () => null, vision: async () => null, chorus: async () => null, chaos: async () => null, ...overrides };
-  const session = new StreamSession({ streamerId: owner, provider, now: () => now }); session.available.openai = true;
+  const provider = { translate: (...args) => { const value = deferred(); requests.push({ ...value, args }); return value.promise; }, audio: async () => null, vision: async () => null, chorus: async () => null, chaos: async () => null, commentary: async () => null, ...overrides };
+  const session = new StreamSession({ streamerId: owner, provider, settings: { language: 'zh', display: 'both' }, now: () => now }); session.available.openai = true;
   const context = session.begin('live');
   const speech = (sequence, final = true, revision = 1, text = `phrase ${sequence}`) => session.acceptSpeech({ ...context, sequence, segmentId: `s${sequence}`, revision, text, final });
   return { session, context, requests, speech, advance: ms => { now += ms; }, now: () => now };
@@ -45,22 +45,22 @@ test('community authority, cooldown, allowed modes and duplicate rewards use the
   const f = fixture(); f.session.setSettings({ allowedModes: ['chaos'] });
   assert.equal(f.session.action({ id: 'no', kind: 'mode', value: 'describe', moderator: false }).applied, false);
   assert.equal(f.session.action({ id: 'lang', kind: 'language', value: 'es', moderator: false }).applied, false);
-  assert.equal(f.session.action({ id: 'reward', kind: 'mode', value: 'chaos', origin: 'reward', moderator: false }).applied, true);
-  assert.equal(f.session.action({ id: 'chat', kind: 'mode', value: 'chaos', origin: 'twitch', moderator: false }).applied, false);
-  f.advance(13000); assert.equal(f.session.action({ id: 'reward', kind: 'mode', value: 'chaos', moderator: false }).applied, false);
+  assert.equal(f.session.action({ id: 'reward', kind: 'addon', value: 'commentary', origin: 'reward', moderator: false }).applied, true);
+  assert.equal(f.session.action({ id: 'chat', kind: 'addon', value: 'commentary', origin: 'twitch', moderator: false }).applied, false);
+  f.advance(13000); assert.equal(f.session.action({ id: 'reward', kind: 'addon', value: 'commentary', moderator: false }).applied, false);
   assert.equal(f.session.action({ id: 'reset', kind: 'reset', moderator: true }).applied, true); assert.equal(f.session.settings().preset, 'captions');
 });
-test('mixed cues are readable, fresh observations take priority, and fiction never enters transcripts', () => {
-  const f = fixture(); f.session.setSettings({ preset: 'context' });
-  const cue = (kind, id, text = id) => ({ ...f.session.context(), id, kind, text, event: id, evidence: [], observedAt: f.now(), expiresAt: f.now() + 8000, language: 'en', origin: 'live' });
-  f.session.offerCue(cue('chorus', 'first')); f.advance(1000);
-  f.session.offerCue(cue('chorus', 'second')); f.session.offerCue(cue('observation', 'laughter'));
-  assert.equal(f.session.overlay().secondary.text, 'first'); f.advance(5000); f.session.tick(); assert.equal(f.session.overlay().secondary.text, 'laughter');
-  f.session.setSettings({ preset: 'chaos', chaosPlacement: 'replace' }); f.advance(6000); f.session.offerCue(cue('fiction', 'joke'));
-  assert.equal(f.session.overlay().secondary.kind, 'fiction'); assert.equal(f.session.snapshot().transcript.length, 0);
+test('commentary uses its own track and never enters the speech transcript', async () => {
+  const f = fixture('alice', { commentary: async () => ({ text: 'A bold plan.', evidence: ['s0'] }) });
+  f.session.setSettings({ tracks: { primary: { mode: 'commentary', language: 'en' }, secondary: { enabled: false } } });
+  f.speech(0); f.session.tick(); await flush();
+  assert.equal(f.session.overlay().tracks[0].text, 'A bold plan.');
+  assert.equal(f.session.snapshot().transcript[0].source, 'phrase 0');
+  assert.ok(!JSON.stringify(f.session.snapshot().transcript).includes('bold plan'));
+  f.advance(6001); assert.equal(f.session.overlay().tracks[0].text, '');
 });
 test('optional work cannot block speech, and disabling a mode rejects its late cue', async () => {
-  const slow = deferred(), f = fixture('alice', { audio: () => slow.promise }); f.session.setSettings({ preset: 'describe' });
+  const slow = deferred(), f = fixture('alice', { audio: () => slow.promise }); f.session.setSettings({ tracks: { primary: { mode: 'commentary' }, secondary: { enabled: true, mode: 'subtitles', language: 'zh' } } });
   f.session.ingestMedia('audio', { ...f.context, audio: 'AAAA' }); f.speech(0); await flush();
   assert.equal(f.requests.length, 1); f.requests[0].resolve('hello'); await flush(); assert.equal(f.session.snapshot().transcript[0].translation, 'hello');
   f.session.setSettings({ preset: 'captions' }); slow.resolve({ text: '(laughing)', event: 'laughter', evidence: [] }); await flush(); assert.equal(f.session.overlay().secondary, null);
@@ -106,16 +106,13 @@ test('a translation too late for display still enriches its exact retained histo
   assert.equal(f.session.snapshot().transcript[0].translationStatus, 'ready:history-only');
   assert.equal(f.session.overlay().caption.source, '');
 });
-test('Chaos receives fresh observed context without presenting observations as fiction', async () => {
-  let recent; const f = fixture('alice', { chaos: async (_context, input) => { recent = input; return { text: 'The floor has resigned.', event: 'none', evidence: [] }; } });
-  f.session.setSettings({ preset: 'chaos' });
-  f.session.offerCue({ ...f.session.context(), id: 'obs', kind: 'observation', text: '(standing)', event: 'standing', observedAt: f.now(), expiresAt: f.now() + 8000 });
-  f.session.tick(); await flush(); assert.deepEqual(recent.observations, ['(standing)']); assert.equal(f.session.overlay().secondary.kind, 'fiction');
-});
-test('lost capture lease stops paid lanes and rejects the old capture identity', async () => {
-  let calls = 0; const f = fixture('alice', { chaos: async () => { calls++; return null; } }); f.session.setSettings({ preset: 'chaos' });
-  f.session.tick(); await flush(); assert.equal(calls, 1); f.advance(31000); f.session.tick(); await flush();
-  assert.equal(calls, 1); assert.equal(f.session.microphone.status, 'stopped'); assert.equal(f.session.owns(f.context), false);
+test('commentary receives fresh enabled evidence and capture loss stops its lane', async () => {
+  let recent, calls = 0; const f = fixture('alice', { commentary: async (_context, input) => { recent = input; calls++; return { text: 'A bold plan.', evidence: ['s0'] }; } });
+  f.session.setSettings({ tracks: { primary: { mode: 'commentary', inputs: { camera: true } }, secondary: { enabled: false } } });
+  f.session.trackRuntime.observe({ text: '(standing)', event: 'standing' }, 'obs', f.now(), 'vision');
+  f.speech(0); f.session.tick(); await flush();
+  assert.equal(recent.observations[0].text, '(standing)'); assert.equal(calls, 1);
+  f.advance(31000); f.session.tick(); await flush(); assert.equal(calls, 1); assert.equal(f.session.owns(f.context), false);
 });
 test('correcting a finalized phrase never pairs its old translation with the new revision', async () => {
   const f = fixture(); f.speech(0); await flush(); f.requests[0].resolve('old translated meaning'); await flush();
@@ -130,7 +127,7 @@ test('freeze holds the exact presentation while speech and translations continue
   f.advance(7000); f.speech(1); await flush(); f.requests[1].resolve('second translation'); await flush();
   assert.deepEqual(f.session.overlay().caption, frozen.caption);
   assert.equal(f.session.snapshot().transcript.at(-1).translation, 'second translation');
-  f.session.setSettings({ language: 'fr', preset: 'chaos' }); await flush();
+  f.session.setSettings({ language: 'fr' }); await flush();
   assert.equal(f.session.overlay().presentationSettings.language, 'zh');
   assert.equal(f.session.overlay().presentationSettings.preset, 'captions');
   f.requests[2].resolve('traduction'); await flush();
@@ -153,4 +150,10 @@ test('viewer actions cannot resume or reveal a streamer-hidden output', () => {
   assert.equal(f.session.action({ id: 'show', kind: 'output', value: 'running', moderator: true }).applied, false);
   f.session.action({ id: 'chaos', kind: 'mode', value: 'chaos', moderator: true });
   assert.equal(f.session.overlay().output.state, 'hidden'); f.session.close();
+});
+
+test('one prolific chatter cannot establish a collective quiet-chat baseline',()=>{
+  let now=100000;const chat=new ChatWindow(()=>now);chat.connected=true;
+  for(let i=0;i<180;i++){now+=1000;chat.add({id:String(i),author:'one-viewer',text:'message '+i});chat.quiet();}
+  for(let i=0;i<90;i++){now+=1000;assert.equal(chat.quiet(),false);}
 });

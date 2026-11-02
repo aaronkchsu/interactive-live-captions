@@ -56,3 +56,9 @@ The original cream/gold design is preserved at tag `auramax-editorial-before-col
 For side-by-side review, the ignored `artifacts/brand-review/` directory contains `original/` and `yellow/` static snapshots. Serve that directory on port 4320 to compare `/original/` and `/yellow/`. Refresh the yellow snapshot after further changes. The Git tag is the durable original; the snapshots are only review aids.
 
 Validation: website checks passed; extracted visible HTML text matches the original exactly. Browser checks at 1280px and 390px showed no horizontal overflow. Translation, caption hiding/restoration, and mode color changes were verified. No JavaScript behavior was changed.
+
+## Live voice translation beta — November 1, 2026
+
+Added a separate feature below the caption demo: “Reach viewers in their language.” It describes continuous spoken translation until stopped, with a separate creator-timed viewer effect, links to early access, and lists the 13 outputs from `public/voice-languages.js` separately from the 21 caption languages. The beta note identifies OBS setup, paid BYOK processing, delay, and variable voice matching. Removed the stale Chinese-only statement. Website checks passed; inspected desktop and 390px mobile layouts and expanded language list without horizontal overflow. This is feature information, not a live audio demo or a claim of completed real-audio acceptance testing.
+
+The initial timed-voice feature was published through Cloudflare Pages Direct Upload and verified on `https://auramaxcap.com/#voice-translation`. Screenshot: `artifacts/voice-beta-landing.png`. The subsequent continuous-voice and configurable viewer-duration wording is prepared in `dist/` and packaged in `../artifacts/auramax-continuous-voice.zip`, but has not yet been published. Browser control became unavailable before the Cloudflare upload; do not treat the initial screenshot as verification of this newer wording.

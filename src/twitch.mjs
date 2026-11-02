@@ -3,13 +3,13 @@ import { parseCommand } from './state.mjs';
 
 export class TwitchOAuth {
   constructor({ credentials, callback, fetcher = fetch, now = Date.now }) { this.credentials = credentials; this.callback = callback; this.fetcher = fetcher; this.now = now; this.pending = new Map(); }
-  async authorize(context) {
+  async authorize(context, subscriptions = false) {
     const c = await this.credentials.get(context);
     if (!c.twitchClientId || !c.twitchClientSecret) throw new Error('Save your Twitch application client ID and secret first.');
     const state = randomBytes(32).toString('hex');
     for (const [key, item] of this.pending) if (item.until < this.now() || item.owner === context.streamerId) this.pending.delete(key);
     this.pending.set(state, { owner: context.streamerId, until: this.now() + 600000 });
-    const query = new URLSearchParams({ client_id: c.twitchClientId, redirect_uri: this.callback, response_type: 'code', scope: 'user:read:chat channel:read:redemptions', state, force_verify: 'true' });
+    const query = new URLSearchParams({ client_id: c.twitchClientId, redirect_uri: this.callback, response_type: 'code', scope: 'user:read:chat channel:read:redemptions' + (subscriptions ? ' channel:read:subscriptions' : ''), state, force_verify: 'true' });
     return { state, url: `https://id.twitch.tv/oauth2/authorize?${query}` };
   }
   async complete(context, code, state, cookieState) {
@@ -27,14 +27,14 @@ export class TwitchOAuth {
 }
 
 export class TwitchAdapter {
-  constructor({ context, credentials, onStatus, onChat, onDelete, onClear, onAction, mappings, fetcher = fetch, socketFactory = url => new WebSocket(url), now = Date.now }) {
+  constructor({ context, credentials, onStatus, onChat, onDelete, onClear, onAction, mappings, subscriptionAddons = () => [], fetcher = fetch, socketFactory = url => new WebSocket(url), now = Date.now }) {
     this.context = context; this.credentials = credentials; this.onStatus = onStatus; this.onChat = onChat;
-    this.onDelete = onDelete; this.onClear = onClear; this.onAction = onAction; this.mappings = mappings;
+    this.onDelete = onDelete; this.onClear = onClear; this.onAction = onAction; this.mappings = mappings; this.subscriptionAddons = subscriptionAddons;
     this.fetcher = fetcher; this.socketFactory = socketFactory; this.now = now;
     this.epoch = 0; this.sockets = new Set(); this.timers = new Set(); this.seen = new Set(); this.retries = 0;
   }
   timer(fn, delay) { const timer = setTimeout(() => { this.timers.delete(timer); fn(); }, delay); timer.unref?.(); this.timers.add(timer); return timer; }
-  status(status, channel = '', error = '') { this.onStatus({ status, channel, error }); }
+  status(status, channel = '', error = '') { this.onStatus({ status, channel, error, subscriptionAccess: status === 'connected' && !!this.identity?.scopes?.includes('channel:read:subscriptions') }); }
   disconnect() { this.epoch++; for (const timer of this.timers) clearTimeout(timer); this.timers.clear(); for (const socket of this.sockets) socket.close(); this.sockets.clear(); this.current = null; this.status('disconnected'); }
   async refresh() {
     if (this.refreshing) return this.refreshing;
@@ -101,6 +101,7 @@ export class TwitchAdapter {
             ['channel.chat.clear', { broadcaster_user_id: this.identity.user_id, user_id: this.identity.user_id }]
           ];
           if (this.identity.scopes.includes('channel:read:redemptions')) conditions.push(['channel.channel_points_custom_reward_redemption.add', { broadcaster_user_id: this.identity.user_id }]);
+          if (this.identity.scopes.includes('channel:read:subscriptions')) conditions.push(['channel.subscribe', { broadcaster_user_id: this.identity.user_id }]);
           for (const [subscription, condition] of conditions) {
             if (epoch !== this.epoch) return;
             await this.helix('eventsub/subscriptions', { method: 'POST', body: JSON.stringify({ type: subscription, version: '1', condition, transport: { method: 'websocket', session_id: message.payload.session.id } }) });
@@ -122,11 +123,13 @@ export class TwitchAdapter {
           const moderator = data.chatter_user_id === this.identity.user_id || data.badges?.some(badge => ['moderator', 'broadcaster'].includes(badge.set_id));
           const action = parseCommand(data.message.text, moderator);
           if (action) this.onAction({ ...action, id: data.message_id, moderator: !!moderator, origin: 'twitch', actor: data.chatter_user_name });
+        } else if (subscription === 'channel.subscribe') {
+          for (const addon of this.subscriptionAddons()) this.onAction({ id: `${id}:${addon.id}`, kind: 'addon', value: addon.id, moderator: false, origin: 'subscription', actor: data.user_name || 'Subscriber' });
         } else if (subscription === 'channel.chat.message_delete') this.onDelete(data.message_id);
         else if (subscription === 'channel.chat.clear') this.onClear();
         else if (subscription === 'channel.channel_points_custom_reward_redemption.add') {
           const value = this.mappings()[data.reward.id];
-          if (value) this.onAction({ id: data.id, kind: value === 'voice:zh' ? 'voice' : 'mode', value: value === 'voice:zh' ? 'zh' : value, moderator: false, origin: 'reward', actor: data.user_name });
+          if (value) this.onAction({ id: data.id, kind: value.startsWith('addon:') || ['subtitles', 'commentary'].includes(value) ? 'addon' : value.startsWith('voice:') ? 'voice' : 'mode', value: value.startsWith('addon:') ? value.slice(6) : value.startsWith('voice:') ? value.slice(6) : value, moderator: false, origin: 'reward', actor: data.user_name });
         }
       } else if (type === 'revocation') { this.disconnect(); this.status('error', this.identity.login, 'Twitch revoked a subscription. Reconnect in Setup.'); }
     })().catch(error => { if (epoch === this.epoch) { this.disconnect(); this.status('error', this.identity?.login || '', error.message); } }); });
@@ -139,6 +142,27 @@ export class TwitchAdapter {
       if (++this.retries > 5) { this.status('error', this.identity.login, 'Twitch reconnect attempts stopped. Reconnect in Setup.'); return; }
       this.status('reconnecting', this.identity.login); this.timer(() => this.attach(epoch), Math.min(30000, 1000 * 2 ** this.retries));
     });
+  }
+  async preview(channel = '') {
+    if (channel && !/^[a-zA-Z0-9_]{1,25}$/.test(channel)) throw new Error('Enter a Twitch channel name, without the URL.');
+    const identity = this.identity || await this.validate();
+    let userId = identity.user_id, login = identity.login;
+    if (channel && channel.toLowerCase() !== login.toLowerCase()) {
+      const users = await this.helix(`users?login=${encodeURIComponent(channel)}`);
+      if (!users.data?.[0]) throw new Error('That Twitch channel was not found.');
+      userId = users.data[0].id; login = users.data[0].login;
+    }
+    const streams = await this.helix(`streams?user_id=${encodeURIComponent(userId)}`);
+    const live = streams.data?.[0];
+    const video = live ? null : (await this.helix(`videos?user_id=${encodeURIComponent(userId)}&first=1&type=archive`)).data?.[0];
+    const item = live || video;
+    let image = '';
+    if (item?.thumbnail_url) {
+      const url = new URL(item.thumbnail_url.replace(/%?\{width\}/g, '1280').replace(/%?\{height\}/g, '720'));
+      if (url.protocol === 'https:' && (url.hostname === 'jtvnw.net' || url.hostname.endsWith('.jtvnw.net'))) image = url.href;
+    }
+    return { channel: login, status: live ? 'live' : video ? 'recorded' : 'offline', image,
+      title: item?.title || '', recordedAt: video?.created_at || '', fetchedAt: this.now() };
   }
   async rewards() {
     if (!this.identity) this.identity = await this.validate();

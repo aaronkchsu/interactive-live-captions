@@ -5,13 +5,17 @@
  * @typedef {Context & {id:string, sequence:number, revision:number, source:string, final:boolean, at:number, expiresAt:number}} SpeechSegment
  * @typedef {Context & {segmentId:string, sourceRevision:number, targetLanguage:string, generation:number, status:string, text:string}} TranslationResult
  * @typedef {Context & {id: string, kind: 'observation'|'chorus'|'fiction', text: string, event?: string, language: string, observedAt: number, expiresAt: number, evidence: string[], origin: 'live'|'demo'}} Cue
- * @typedef {Context & {id: string, durationMs?:number, kind: 'mode'|'style'|'language'|'voice'|'reset', value?: string, moderator: boolean, origin: string, actor: string}} CommunityAction
+ * @typedef {Context & {id: string, durationMs?:number, kind: 'addon'|'mode'|'style'|'language'|'voice'|'reset', value?: string, moderator: boolean, origin: string, actor: string}} CommunityAction
  * @typedef {{now: () => number}} Clock
  */
-export const protocolVersion = 2;
+export const protocolVersion = 3;
 
 /**
  * @typedef {Object} Settings
+ * @property {number} schemaVersion
+ * @property {ReturnType<typeof import('../public/track-model.js').migrateTracks>} tracks
+ * @property {Array<any>} addons
+ * @property {boolean} viewerStyles
  * @property {string} style
  * @property {string} language
  * @property {string} display
@@ -35,7 +39,9 @@ export const protocolVersion = 2;
  * @property {boolean} cameraEnabled
  * @property {{x:number,y:number,width:number,height:number}} crop
  * @property {Record<string,string>} rewardMappings
+ * @property {string} voiceLanguage
  * @property {boolean} voiceEnabled
+ * @property {number} voiceViewerDuration
  * @property {boolean} voiceViewerEnabled
  * @property {boolean} setupComplete
  */
